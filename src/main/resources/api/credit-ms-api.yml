@@ -1,0 +1,175 @@
+openapi: 3.0.3
+info:
+  title: Credit Service API
+  description: API para la gestión de productos de credito
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Local development server
+paths:
+  /credits:
+    post:
+      tags:
+        - Credit
+      summary: Create a new credit
+      operationId: createCredit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditRequest'
+      responses:
+        '201':
+          description: Credit created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditResponse'
+    get:
+      tags:
+        - Credit
+      summary: Get all credits
+      operationId: getAllCredits
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of credits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CreditResponse'
+  /credits/{id}/balance:
+    get:
+      tags:
+        - Credit
+      summary: Get credit balance
+      operationId: getCreditBalance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Credit balance details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditBalanceResponse'
+  /credit-cards:
+    post:
+      tags:
+        - Credit
+      summary: Create a new credit card
+      operationId: createCreditCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditCardRequest'
+      responses:
+        '201':
+          description: Credit card created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCardResponse'
+components:
+  schemas:
+    CreditRequest:
+      type: object
+      required:
+        - customerId
+        - creditType
+        - amount
+      properties:
+        customerId:
+          type: string
+        creditType:
+          type: string
+          enum: [PERSONAL, BUSINESS]
+        amount:
+          type: number
+        term:
+          type: integer
+        interestRate:
+          type: number
+    CreditResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        creditType:
+          type: string
+        amount:
+          type: number
+        balance:
+          type: number
+        term:
+          type: integer
+        interestRate:
+          type: number
+        status:
+          type: string
+          enum: [ACTIVE, PAID, DEFAULTED]
+        nextPaymentDate:
+          type: string
+          format: date
+    CreditCardRequest:
+      type: object
+      required:
+        - customerId
+        - cardType
+      properties:
+        customerId:
+          type: string
+        cardType:
+          type: string
+          enum: [PERSONAL, BUSINESS]
+        creditLimit:
+          type: number
+    CreditCardResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        cardNumber:
+          type: string
+        cardType:
+          type: string
+        creditLimit:
+          type: number
+        availableCredit:
+          type: number
+        status:
+          type: string
+          enum: [ACTIVE, BLOCKED, CANCELLED]
+    CreditBalanceResponse:
+      type: object
+      properties:
+        creditId:
+          type: string
+        originalAmount:
+          type: number
+        currentBalance:
+          type: number
+        nextPaymentAmount:
+          type: number
+        nextPaymentDate:
+          type: string
+          format: date
+        daysOverdue:
+          type: integer
