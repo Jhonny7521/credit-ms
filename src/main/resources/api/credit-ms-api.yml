@@ -8,24 +8,6 @@ servers:
     description: Local development server
 paths:
   /credits:
-    post:
-      tags:
-        - Credit
-      summary: Create a new credit
-      operationId: createCredit
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreditRequest'
-      responses:
-        '201':
-          description: Credit created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreditResponse'
     get:
       tags:
         - Credit
@@ -44,7 +26,70 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CreditResponse'
+                  $ref: '#/components/schemas/CreditResponseDTO'
+    post:
+      tags:
+        - Credit
+      summary: Create a new credit
+      operationId: createCredit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditRequestDTO'
+      responses:
+        '201':
+          description: Credit created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditResponseDTO'
+
+  /credits/{id}:
+    get:
+      tags:
+        - Credit
+      summary: Get credit by ID
+      operationId: getCreditById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditResponseDTO'
+    put:
+      tags:
+        - Credit
+      summary: Update balance of credit
+      operationId: updateCreditBalance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BalanceUpdateRequestDTO'
+      responses:
+        '201':
+          description: Credit updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceUpdateResponseDTO'
+
   /credits/{id}/balance:
     get:
       tags:
@@ -63,8 +108,27 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditBalanceResponse'
+                $ref: '#/components/schemas/CreditBalanceResponseDTO'
   /credit-cards:
+    get:
+      tags:
+        - Credit
+      summary: Get all credits cards
+      operationId: getAllCreditCars
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of credit cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CreditResponseDTO'
     post:
       tags:
         - Credit
@@ -75,17 +139,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreditCardRequest'
+              $ref: '#/components/schemas/CreditCardRequestDTO'
       responses:
         '201':
           description: Credit card created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCardResponse'
+                $ref: '#/components/schemas/CreditCardResponseDTO'
 components:
   schemas:
-    CreditRequest:
+    CreditRequestDTO:
       type: object
       required:
         - customerId
@@ -94,39 +158,61 @@ components:
       properties:
         customerId:
           type: string
+          description: Identificador de cliente
         creditType:
           type: string
           enum: [PERSONAL, BUSINESS]
+          description: Tipo de credito
         amount:
           type: number
+          description: Monto monetario solicitado
         term:
           type: integer
+          description: Plazo de prestamo en meses
         interestRate:
           type: number
-    CreditResponse:
+          description: Taza de interez anual
+    CreditResponseDTO:
       type: object
       properties:
         id:
           type: string
+          description: Identificador unico de prestamo
         customerId:
           type: string
+          description: Identificador de cliente
         creditType:
           type: string
+          description: Tipo de credito
         amount:
           type: number
+          description: Monto monetario solicitado
         balance:
           type: number
+          description: Saldo pendiente actual
         term:
           type: integer
+          description: Plazo de prestamo en meses
         interestRate:
           type: number
+          description: Taza de interez anual
         status:
           type: string
           enum: [ACTIVE, PAID, DEFAULTED]
+          description: Estatus del credito
         nextPaymentDate:
           type: string
           format: date
-    CreditCardRequest:
+          description: Proxima fecha de pago
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha de creación del credito
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha de actualización del credito
+    CreditCardRequestDTO:
       type: object
       required:
         - customerId
@@ -134,42 +220,89 @@ components:
       properties:
         customerId:
           type: string
+          description: Identificador del ciente
         cardType:
           type: string
           enum: [PERSONAL, BUSINESS]
+          description: Tipo de tarjeta de credito
         creditLimit:
           type: number
-    CreditCardResponse:
+          description: Limite de credito solicitado
+    CreditCardResponseDTO:
       type: object
       properties:
         id:
           type: string
+          description: Identificador unico de tarjeta de credito
         customerId:
           type: string
+          description: Identificador de cliente
         cardNumber:
           type: string
+          description: Numero de tarjeta
         cardType:
           type: string
+          description: Tipo de tarjeta de credito
         creditLimit:
           type: number
+          description: Limite de credito solicitado
         availableCredit:
           type: number
+          description: Credito disponible en la tarjeta de credito
         status:
           type: string
           enum: [ACTIVE, BLOCKED, CANCELLED]
-    CreditBalanceResponse:
+          description: Estado de la tarjeta de credito
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha de creación de la cuanta bancaria
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha de actualización de la cuanta bancaria
+    CreditBalanceResponseDTO:
       type: object
       properties:
         creditId:
           type: string
+          description: Identificador del credito
         originalAmount:
           type: number
+          description: Monto monetario inicial
         currentBalance:
           type: number
+          description: Saldo actual
         nextPaymentAmount:
           type: number
+          description: Monto de proxima cuota
         nextPaymentDate:
           type: string
           format: date
+          description: Fecha de proximo pago
         daysOverdue:
           type: integer
+          description: Dias de retrazo
+    BalanceUpdateRequestDTO:
+      type: object
+      properties:
+        creditId:
+          type: string
+          description: Identificador de credito
+        transactionType:
+          type: string
+          enum: [DEPOSIT, WITHDRAWAL, PAYMENT, CREDIT_CHARGE]
+          description: Tipo de transaccion
+        transactionAmount:
+          type: number
+          description: Monto de transaccion
+    BalanceUpdateResponseDTO:
+      type: object
+      properties:
+        creditId:
+          type: string
+          description: Identificador de credito
+        balance:
+          type: number
+          description: Saldo pendiente
+
