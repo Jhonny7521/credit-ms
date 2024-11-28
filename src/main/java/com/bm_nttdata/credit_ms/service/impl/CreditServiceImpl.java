@@ -171,10 +171,12 @@ public class CreditServiceImpl implements ICreditService {
     @Override
     public void deleteCredit(String id) {
 
-        Credit credit = getCreditById(id);
-        validateAccountDeletion(credit);
+        log.info("Initiating credit deletion: {}", id);
 
         try {
+            Credit credit = getCreditById(id);
+            validateCreditDeletion(credit);
+
             creditRepository.delete(credit);
         } catch (Exception e) {
             log.error("Error deleting credit {}: {}", id, e.getMessage());
@@ -209,7 +211,7 @@ public class CreditServiceImpl implements ICreditService {
         }
     }
 
-    private void validateAccountDeletion(Credit credit) {
+    private void validateCreditDeletion(Credit credit) {
         if (credit.getBalance().intValue() > 0){
             throw new BusinessRuleException("An credit with an outstanding balance can't be deleted.");
         }

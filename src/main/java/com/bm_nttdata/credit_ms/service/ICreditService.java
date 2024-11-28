@@ -20,8 +20,6 @@ public interface ICreditService {
 
     OperationResponseDTO updateCreditBalance(String id, BalanceUpdateRequestDTO balanceUpdateRequestDTO);
 
-
-
     void deleteCredit(String id);
 
 }

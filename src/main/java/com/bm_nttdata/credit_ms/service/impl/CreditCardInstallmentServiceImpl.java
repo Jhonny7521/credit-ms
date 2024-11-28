@@ -29,7 +29,7 @@ public class CreditCardInstallmentServiceImpl implements ICreditCardInstallmentS
     @Autowired
     private CreditCardInstallmentRepository cardInstallmentRepository;
 
-    @Override
+
     public List<CreditCardInstallment> getInstallmentsByCreditCardIdAndStatus(String creditCardId, String status) {
 
         try{

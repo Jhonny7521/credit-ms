@@ -8,6 +8,7 @@ import com.bm_nttdata.credit_ms.model.*;
 import com.bm_nttdata.credit_ms.service.ICreditService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
@@ -49,6 +50,13 @@ public class CreditApiDelegateImpl implements CreditApiDelegate{
         log.info("Creating credit for customer: {}", creditRequestDTO.getCustomerId());
         Credit credit = creditService.createCredit(creditRequestDTO);
         return ResponseEntity.ok(creditMapper.creditEntityToCreditResponseDto(credit));
+    }
+
+    @Override
+    public ResponseEntity<Void> deleteCredit(String id) {
+        log.info("Deleting credit: {}", id);
+        creditService.deleteCredit(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @Override

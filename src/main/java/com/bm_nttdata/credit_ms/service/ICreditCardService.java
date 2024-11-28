@@ -22,4 +22,6 @@ public interface ICreditCardService {
     OperationResponseDTO paymentCreditCard(PaymentCreditProductRequestDTO paymentCreditProductRequestDTO);
 
     OperationResponseDTO updateCreditCardBalance(String id, BalanceUpdateRequestDTO balanceUpdateRequestDTO);
+
+    void deleteCredit(String id);
 }

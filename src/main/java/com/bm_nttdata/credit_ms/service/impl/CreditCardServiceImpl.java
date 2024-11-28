@@ -3,6 +3,7 @@ package com.bm_nttdata.credit_ms.service.impl;
 import com.bm_nttdata.credit_ms.DTO.OperationResponseDTO;
 import com.bm_nttdata.credit_ms.DTO.CustomerDTO;
 import com.bm_nttdata.credit_ms.client.CustomerClient;
+import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.entity.CreditCard;
 import com.bm_nttdata.credit_ms.enums.CardStatusEnum;
 import com.bm_nttdata.credit_ms.exception.ApiInvalidRequestException;
@@ -237,6 +238,27 @@ public class CreditCardServiceImpl implements ICreditCardService {
                     .message("Unprocessed charge")
                     .error("Error while updating monthly credit card balance: " + e.getMessage())
                     .build();
+        }
+    }
+
+    @Override
+    public void deleteCredit(String id) {
+        log.info("Initiating credit deletion: {}", id);
+
+        try {
+            CreditCard creditCard = getCreditCardById(id);
+            validateCreditCardDeletion(creditCard);
+
+            creditCardRepository.delete(creditCard);
+        } catch (Exception e) {
+            log.error("Error deleting credit {}: {}", id, e.getMessage());
+            throw new ServiceException("Error deleting credit: " + e.getMessage());
+        }
+    }
+
+    private void validateCreditCardDeletion(CreditCard creditCard) {
+        if (creditCard.getCreditLimit().compareTo(creditCard.getAvailableCredit()) != 0){
+            throw new BusinessRuleException("A credit card with an outstanding balance can't be deleted.");
         }
     }
 

@@ -8,6 +8,7 @@ import com.bm_nttdata.credit_ms.model.*;
 import com.bm_nttdata.credit_ms.service.ICreditCardService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
@@ -52,6 +53,13 @@ public class CreditCardApiDelegateImpl implements CreditCardApiDelegate{
         log.info("Creating credit card for customer: {}", creditCardRequestDTO.getCustomerId());
         CreditCard creditCard = creditCardService.createCreditCard(creditCardRequestDTO);
         return ResponseEntity.ok(creditCardMapper.creditCardEntityToCreditCardResponseDto(creditCard));
+    }
+
+    @Override
+    public ResponseEntity<Void> deleteCreditCard(String id) {
+        log.info("Deleting credit card: {}", id);
+        creditCardService.deleteCredit(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @Override
