@@ -16,19 +16,20 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "credit_payment_schedule")
-public class CreditPaymentSchedule {
+@Document(collection = "credit_card_installment")
+public class CreditCardInstallment {
 
     @Id
     private String id;
-    private String creditId;
-    private BigDecimal creditAmount;
-    private Integer installmentNumber;
-    private BigDecimal installmentAmount;
+    private String purchaseId;
+    private String creditCardId;
+    private int installmentNumber;
+    private int totalInstallments;
+    private BigDecimal totalAmount;
+    private BigDecimal totalInterest;
     private LocalDate dueDate;
-    private long daysOverdue;
-    private BigDecimal interest;
     private InstallmentStatusEnum status;
+    private long daysOverdue;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

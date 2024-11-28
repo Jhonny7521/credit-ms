@@ -1,12 +1,9 @@
 package com.bm_nttdata.credit_ms.mapper;
 
-import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.entity.CreditCard;
-import com.bm_nttdata.credit_ms.model.CreditCardRequestDTO;
-import com.bm_nttdata.credit_ms.model.CreditCardResponseDTO;
-import com.bm_nttdata.credit_ms.model.CreditRequestDTO;
-import com.bm_nttdata.credit_ms.model.CreditResponseDTO;
+import com.bm_nttdata.credit_ms.model.*;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -17,7 +14,10 @@ public interface CreditCardMapper {
 
     CreditCard creditCardRequestDtoToCreditCardEntity(CreditCardRequestDTO creditCardRequestDTO);
 
-    CreditCardResponseDTO creditEntityToCreditResponseDto(CreditCard creditCard);
+    CreditCardResponseDTO creditCardEntityToCreditCardResponseDto(CreditCard creditCard);
+
+    @Mapping(target = "creditCardId", source = "id")
+    CreditCardBalanceResponseDTO creditCardEntityToCreditCardBalanceResponseDto(CreditCard creditCard);
 
     default OffsetDateTime map(LocalDateTime localDateTime) {
         if (localDateTime == null) {

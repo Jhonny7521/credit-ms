@@ -1,7 +1,6 @@
 package com.bm_nttdata.credit_ms.mapper;
 
 import com.bm_nttdata.credit_ms.entity.Credit;
-import com.bm_nttdata.credit_ms.model.BalanceUpdateResponseDTO;
 import com.bm_nttdata.credit_ms.model.CreditBalanceResponseDTO;
 import com.bm_nttdata.credit_ms.model.CreditRequestDTO;
 import com.bm_nttdata.credit_ms.model.CreditResponseDTO;
@@ -18,8 +17,6 @@ public interface CreditMapper {
     Credit creditRequestDtoToCreditEntity(CreditRequestDTO creditRequestDTO);
 
     CreditResponseDTO creditEntityToCreditResponseDto(Credit credit);
-
-    BalanceUpdateResponseDTO creditEntityToBalanceUpdateResponseDto(Credit credit);
 
     @Mapping(target = "originalAmount", source = "amount")
     @Mapping(target = "currentBalance", source = "balance")

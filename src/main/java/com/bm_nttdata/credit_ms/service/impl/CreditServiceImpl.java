@@ -1,6 +1,7 @@
 package com.bm_nttdata.credit_ms.service.impl;
 
 import com.bm_nttdata.credit_ms.DTO.CustomerDTO;
+import com.bm_nttdata.credit_ms.DTO.OperationResponseDTO;
 import com.bm_nttdata.credit_ms.client.CustomerClient;
 import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.enums.CreditStatusEnum;
@@ -11,12 +12,11 @@ import com.bm_nttdata.credit_ms.exception.ServiceException;
 import com.bm_nttdata.credit_ms.mapper.CreditMapper;
 import com.bm_nttdata.credit_ms.model.BalanceUpdateRequestDTO;
 import com.bm_nttdata.credit_ms.model.CreditRequestDTO;
-import com.bm_nttdata.credit_ms.model.CreditResponseDTO;
+import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDTO;
 import com.bm_nttdata.credit_ms.repository.CreditRepository;
 import com.bm_nttdata.credit_ms.service.ICreditPaymentScheduleService;
 import com.bm_nttdata.credit_ms.service.ICreditService;
-import com.bm_nttdata.credit_ms.util.CardNumberGenerator;
-import com.netflix.discovery.converters.Auto;
+import com.bm_nttdata.credit_ms.util.MonthlyInstallmentCalculator;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +42,8 @@ public class CreditServiceImpl implements ICreditService {
     @Autowired
     private CustomerClient customerClient;
 
+    @Autowired
+    private MonthlyInstallmentCalculator installmentCalculator;
     @Override
     public List<Credit> getAllCredits(String customerId) {
 
@@ -73,7 +75,7 @@ public class CreditServiceImpl implements ICreditService {
         }
 
         validateCreditCreation(customerDTO, creditRequestDTO);
-        BigDecimal monthlyPayment = paymentScheduleService.calculateMonthlyPayment(creditRequestDTO.getAmount(), creditRequestDTO.getInterestRate(), creditRequestDTO.getTerm()); //BigDecimal creditAmount, double interestRate, int months
+        BigDecimal monthlyPayment = installmentCalculator.calculateMonthlyPayment(creditRequestDTO.getAmount(), creditRequestDTO.getInterestRate(), creditRequestDTO.getTerm()); //BigDecimal creditAmount, double interestRate, int months
         Credit credit = initializeCredit(creditMapper.creditRequestDtoToCreditEntity(creditRequestDTO), monthlyPayment);
 
         try{
@@ -82,22 +84,87 @@ public class CreditServiceImpl implements ICreditService {
             return credit;
         } catch (Exception e) {
             log.error("Unexpected error while saving credit: {}", e.getMessage());
-            throw new ServiceException("Unexpected error creating credit");
+            throw new ServiceException("Unexpected error creating credit" + e.getMessage());
         }
     }
 
     @Override
-    public Credit updateCredit(String id, BalanceUpdateRequestDTO balanceUpdateRequestDTO) {
+    public OperationResponseDTO paymentCredit(PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
 
-        Credit credit = getCreditById(id);
-        paymentScheduleService.updatePaymentSchedule(credit);
-        credit = updateBalanceByTransactionType(credit, balanceUpdateRequestDTO);
+        log.info("Initiating payment processing on credit: {}", paymentCreditProductRequestDTO.getCreditProductId());
 
-        try{
-            return creditRepository.save(credit);
+        try {
+            Credit credit = getCreditById(paymentCreditProductRequestDTO.getCreditProductId());
+            BigDecimal amountPaid = paymentScheduleService.payMonthlyInstallment(
+                    paymentCreditProductRequestDTO.getPaymentAmount(),
+                    credit.getId(),
+                    credit.getPaymentDay());
+
+            BalanceUpdateRequestDTO balanceUpdateRequestDTO = new BalanceUpdateRequestDTO();
+            balanceUpdateRequestDTO.setTransactionAmount(amountPaid);
+            balanceUpdateRequestDTO.setTransactionType(BalanceUpdateRequestDTO.TransactionTypeEnum.PAYMENT);
+
+            OperationResponseDTO operationResponseDTO = updateCreditBalance(credit.getId(), balanceUpdateRequestDTO);
+
+            if (!operationResponseDTO.getStatus().equals("SUCCESS")){
+
+                return operationResponseDTO;
+            }
+
+            log.info("Payment processed successfully: {}", credit.getId());
+            operationResponseDTO.setMessage("Payment successfully processed");
+
+            return operationResponseDTO;
+
         }catch (Exception e){
-            log.error("Unexpected error while updating account {}: {}", id, e.getMessage());
-            throw new ServiceException("Unexpected error updating account");
+            log.error("Error when paying monthly payment : {}", e.getMessage());
+            return OperationResponseDTO.builder()
+                    .status("FAILED")
+                    .message("Unprocessed charge")
+                    .error("Error when paying monthly payment: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    @Override
+    public OperationResponseDTO updateCreditBalance(String id, BalanceUpdateRequestDTO balanceUpdateRequestDTO) {
+
+        log.info("Initiating credit balance update: {}", id);
+
+        try {
+            Credit credit= getCreditById(id);
+            String transactionType = balanceUpdateRequestDTO.getTransactionType().getValue();
+            BigDecimal transactionAmount = balanceUpdateRequestDTO.getTransactionAmount();
+
+            if (!transactionType.equals("PAYMENT")){
+                return OperationResponseDTO.builder()
+                        .status("FAILED")
+                        .message("Unprocessed charge")
+                        .error("Incorrect transaction type")
+                        .build();
+            }
+
+            credit.setBalance(credit.getBalance().subtract(transactionAmount));
+            credit.setNextPaymentDate(credit.getNextPaymentDate().plusMonths(1));
+            credit.setNextPaymentInstallment(credit.getNextPaymentInstallment() + 1);
+            credit.setUpdatedAt(LocalDateTime.now());
+
+            creditRepository.save(credit);
+
+            log.info(" *** Balance update successful *** ");
+
+            return OperationResponseDTO.builder()
+                    .status("SUCCESS")
+                    .message("Balance update successful")
+                    .build();
+
+        }catch (Exception e){
+            log.error("Unexpected error while updating credit balance: {}", e.getMessage());
+            return OperationResponseDTO.builder()
+                    .status("FAILED")
+                    .message("Unprocessed charge")
+                    .error("Error while updating monthly credit balance: " + e.getMessage())
+                    .build();
         }
     }
 
@@ -146,18 +213,6 @@ public class CreditServiceImpl implements ICreditService {
         if (credit.getBalance().intValue() > 0){
             throw new BusinessRuleException("An credit with an outstanding balance can't be deleted.");
         }
-    }
-
-    private Credit updateBalanceByTransactionType(Credit credit, BalanceUpdateRequestDTO balanceUpdateRequestDTO){
-
-        BigDecimal newBalance = credit.getBalance().subtract(balanceUpdateRequestDTO.getTransactionAmount()) ; //credit.getBalance().doubleValue() - Double.valueOf(balanceUpdateRequestDTO.getTransactionAmount().doubleValue());
-
-        credit.setBalance(newBalance);
-        credit.setNextPaymentDate(credit.getNextPaymentDate().plusMonths(1));
-        credit.setNextPaymentInstallment(credit.getNextPaymentInstallment() + 1);
-        credit.setUpdatedAt(LocalDateTime.now());
-
-        return credit;
     }
 
     private Credit initializeCredit(Credit credit, BigDecimal monthlyPayment) {

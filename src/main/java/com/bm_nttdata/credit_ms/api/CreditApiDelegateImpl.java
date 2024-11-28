@@ -1,7 +1,9 @@
 package com.bm_nttdata.credit_ms.api;
 
+import com.bm_nttdata.credit_ms.DTO.OperationResponseDTO;
 import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.mapper.CreditMapper;
+import com.bm_nttdata.credit_ms.mapper.OperationResponseMapper;
 import com.bm_nttdata.credit_ms.model.*;
 import com.bm_nttdata.credit_ms.service.ICreditService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,9 @@ public class CreditApiDelegateImpl implements CreditApiDelegate{
 
     @Autowired
     private CreditMapper creditMapper;
+
+    @Autowired
+    private OperationResponseMapper responseMapper;
 
     @Override
     public ResponseEntity<List<CreditResponseDTO>> getAllCredits(String customerId){
@@ -47,10 +52,19 @@ public class CreditApiDelegateImpl implements CreditApiDelegate{
     }
 
     @Override
-    public ResponseEntity<BalanceUpdateResponseDTO> updateCreditBalance(String id, BalanceUpdateRequestDTO balanceUpdateRequestDTO) {
+    public ResponseEntity<ApiResponseDTO> paymentCredit(String id, PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
+
+        log.info("Processing credit payment: {}", paymentCreditProductRequestDTO.getCreditProductId());
+        OperationResponseDTO operationResponseDTO = creditService.paymentCredit(paymentCreditProductRequestDTO);
+
+        return ResponseEntity.ok(responseMapper.entityOperationResponseToApiResponseDTO(operationResponseDTO));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponseDTO> updateCreditBalance(String id, BalanceUpdateRequestDTO balanceUpdateRequestDTO) {
         log.info("Updating balance of credit: {}", id);
-        Credit credit = creditService.updateCredit(id, balanceUpdateRequestDTO);
-        return ResponseEntity.ok(creditMapper.creditEntityToBalanceUpdateResponseDto(credit));
+        OperationResponseDTO operationResponseDTO = creditService.updateCreditBalance(id, balanceUpdateRequestDTO);
+        return ResponseEntity.ok(responseMapper.entityOperationResponseToApiResponseDTO(operationResponseDTO));
     }
 
     @Override

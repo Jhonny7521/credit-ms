@@ -28,9 +28,10 @@ public class Credit {
     private Integer term;
     private Double interestRate;
     private CreditStatusEnum status;
+    private int paymentDay;
     private LocalDate nextPaymentDate;
     private BigDecimal nextPaymentAmount;
-    private Integer nextPaymentInstallment;
+    private int nextPaymentInstallment;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
