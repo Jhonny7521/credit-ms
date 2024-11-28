@@ -19,17 +19,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<Map<String, Object>> handleBusinessRuleException(BusinessRuleException ex){
-        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), "CREDIT_NOT_FOUND");
+        return createErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), "BUSINESS_RULE_VIOLATION");
     }
 
     @ExceptionHandler(ApiInvalidRequestException.class)
     public ResponseEntity<Map<String, Object>> handleApiInvalidRequestException(ApiInvalidRequestException ex){
-        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), "CREDIT_NOT_FOUND");
+        return createErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), "BAD_REQUEST");
     }
 
     @ExceptionHandler(ServiceException.class)
     public ResponseEntity<Map<String, Object>> handleServiceException(ServiceException ex){
-        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), "CREDIT_NOT_FOUND");
+        return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), "SERVICE_EXCEPTION");
     }
 
     private ResponseEntity<Map<String, Object>> createErrorResponse(HttpStatus status, String message, String code) {

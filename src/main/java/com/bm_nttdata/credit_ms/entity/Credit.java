@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -22,12 +23,15 @@ public class Credit {
     private String id;
     private String customerId;
     private CreditTypeEnum creditType;
-    private Double amount;
-    private Double balance;
+    private BigDecimal amount;
+    private BigDecimal balance;
     private Integer term;
     private Double interestRate;
     private CreditStatusEnum status;
+    private int paymentDay;
     private LocalDate nextPaymentDate;
+    private BigDecimal nextPaymentAmount;
+    private int nextPaymentInstallment;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
