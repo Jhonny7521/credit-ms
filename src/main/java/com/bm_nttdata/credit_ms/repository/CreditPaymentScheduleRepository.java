@@ -9,5 +9,5 @@ import java.util.List;
 
 public interface CreditPaymentScheduleRepository extends MongoRepository<CreditPaymentSchedule, String> {
 
-    List<CreditPaymentSchedule> findByCreditCardIdAndDueDateLessThanAndStatusNot(String creditCardId, LocalDate dueDate, InstallmentStatusEnum paid);
+    List<CreditPaymentSchedule> findByCreditIdAndDueDateLessThanAndStatusNot(String creditId, LocalDate dueDate, InstallmentStatusEnum paid);
 }

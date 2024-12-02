@@ -72,9 +72,9 @@ public class CreditCardApiDelegateImpl implements CreditCardApiDelegate{
     }
 
     @Override
-    public ResponseEntity<ApiResponseDTO> paymentCreditCard(String id, PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
+    public ResponseEntity<ApiResponseDTO> paymentCreditCard(PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
 
-        log.info("Processing credit card payment: {}", paymentCreditProductRequestDTO.getCreditProductId());
+        log.info("Processing credit card payment: {}", paymentCreditProductRequestDTO.getCreditId());
         OperationResponseDTO operationResponseDTO = creditCardService.paymentCreditCard(paymentCreditProductRequestDTO);
 
         return ResponseEntity.ok(responseMapper.entityOperationResponseToApiResponseDTO(operationResponseDTO));

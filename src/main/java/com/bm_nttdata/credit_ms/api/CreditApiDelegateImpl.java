@@ -60,9 +60,9 @@ public class CreditApiDelegateImpl implements CreditApiDelegate{
     }
 
     @Override
-    public ResponseEntity<ApiResponseDTO> paymentCredit(String id, PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
+    public ResponseEntity<ApiResponseDTO> paymentCredit(PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
 
-        log.info("Processing credit payment: {}", paymentCreditProductRequestDTO.getCreditProductId());
+        log.info("Processing credit payment: {}", paymentCreditProductRequestDTO.getCreditId());
         OperationResponseDTO operationResponseDTO = creditService.paymentCredit(paymentCreditProductRequestDTO);
 
         return ResponseEntity.ok(responseMapper.entityOperationResponseToApiResponseDTO(operationResponseDTO));

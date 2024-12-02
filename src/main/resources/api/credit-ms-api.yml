@@ -109,18 +109,12 @@ paths:
         '409':
           description: Cannot delete Credit with outstanding balance
 
-  /credit/{id}/payment:
+  /credits/payment:
     post:
       tags:
         - Credit
       summary: Payment to credit
       operationId: paymentCredit
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -255,18 +249,12 @@ paths:
         '409':
           description: Cannot delete Credit card with outstanding balance
 
-  /credit-cards/{id}/payment:
+  /credit-cards/payment:
     post:
       tags:
         - CreditCard
       summary: Payment to credit card
       operationId: paymentCreditCard
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -528,12 +516,21 @@ components:
         - creditCardId
         - paymentAmount
       properties:
-        creditProductId:
+        sourceAccountId:
           type: string
-          description: Identificador de producto de credito
-        paymentAmount:
+          description: Identificador de cuenta origen
+        creditId:
+          type: string
+          description: Identificador de producto de credito (Credito o Tarjeta de Credito)
+        amount:
           type: number
           description: Monto de pago
+        feeAmount:
+          type: number
+          description: Monto de comision
+        description:
+          type: string
+          description: Descripcion de pago
     ApiResponseDTO:
       type: object
       properties:

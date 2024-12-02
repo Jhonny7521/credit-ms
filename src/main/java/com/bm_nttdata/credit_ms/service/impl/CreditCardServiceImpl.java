@@ -150,12 +150,12 @@ public class CreditCardServiceImpl implements ICreditCardService {
     @Override
     public OperationResponseDTO paymentCreditCard(PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
 
-        log.info("Initiating payment processing on credit card: {}", paymentCreditProductRequestDTO.getCreditProductId());
+        log.info("Initiating payment processing on credit card: {}", paymentCreditProductRequestDTO.getCreditId());
 
         try {
-            CreditCard creditCard = getCreditCardById(paymentCreditProductRequestDTO.getCreditProductId());
+            CreditCard creditCard = getCreditCardById(paymentCreditProductRequestDTO.getCreditId());
             BigDecimal amountPaid = cardInstallmentService.payBillMonth(
-                    paymentCreditProductRequestDTO.getPaymentAmount(),
+                    paymentCreditProductRequestDTO.getAmount(),
                     creditCard.getId(),
                     creditCard.getPaymentDate());
 

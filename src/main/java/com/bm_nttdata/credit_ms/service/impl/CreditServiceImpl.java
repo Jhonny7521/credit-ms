@@ -91,12 +91,12 @@ public class CreditServiceImpl implements ICreditService {
     @Override
     public OperationResponseDTO paymentCredit(PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
 
-        log.info("Initiating payment processing on credit: {}", paymentCreditProductRequestDTO.getCreditProductId());
+        log.info("Initiating payment processing on credit: {}", paymentCreditProductRequestDTO.getCreditId());
 
         try {
-            Credit credit = getCreditById(paymentCreditProductRequestDTO.getCreditProductId());
+            Credit credit = getCreditById(paymentCreditProductRequestDTO.getCreditId());
             BigDecimal amountPaid = paymentScheduleService.payMonthlyInstallment(
-                    paymentCreditProductRequestDTO.getPaymentAmount(),
+                    paymentCreditProductRequestDTO.getAmount(),
                     credit.getId(),
                     credit.getPaymentDay());
 

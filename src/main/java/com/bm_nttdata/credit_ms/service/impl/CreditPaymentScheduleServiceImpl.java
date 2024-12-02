@@ -65,7 +65,7 @@ public class CreditPaymentScheduleServiceImpl implements ICreditPaymentScheduleS
         log.info(" *** Successful creation *** ");
     }
 
-    public List<CreditPaymentSchedule> getMonthInstallments(String creditCardId, int paymentDay) {
+    public List<CreditPaymentSchedule> getMonthInstallments(String creditId, int paymentDay) {
 
         try{
             LocalDate currentDate = LocalDate.now();
@@ -77,7 +77,7 @@ public class CreditPaymentScheduleServiceImpl implements ICreditPaymentScheduleS
             }
 
             List<CreditPaymentSchedule> paymentScheduleList = paymentScheduleRepository
-                    .findByCreditCardIdAndDueDateLessThanAndStatusNot( creditCardId, dueDate, InstallmentStatusEnum.PAID );
+                    .findByCreditIdAndDueDateLessThanAndStatusNot( creditId, dueDate, InstallmentStatusEnum.PAID );
 
             if (paymentScheduleList.isEmpty()) throw new CreditNotFoundException("No debt exists");
 
