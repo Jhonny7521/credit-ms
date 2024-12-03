@@ -1,26 +1,37 @@
 package com.bm_nttdata.credit_ms.api;
 
-import com.bm_nttdata.credit_ms.DTO.OperationResponseDTO;
+import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
 import com.bm_nttdata.credit_ms.entity.CreditCard;
 import com.bm_nttdata.credit_ms.mapper.CreditCardMapper;
 import com.bm_nttdata.credit_ms.mapper.OperationResponseMapper;
-import com.bm_nttdata.credit_ms.model.*;
-import com.bm_nttdata.credit_ms.service.ICreditCardService;
+import com.bm_nttdata.credit_ms.model.ApiResponseDto;
+import com.bm_nttdata.credit_ms.model.BalanceUpdateRequestDto;
+import com.bm_nttdata.credit_ms.model.ChargueCreditCardRequestDto;
+import com.bm_nttdata.credit_ms.model.CreditCardBalanceResponseDto;
+import com.bm_nttdata.credit_ms.model.CreditCardRequestDto;
+import com.bm_nttdata.credit_ms.model.CreditCardResponseDto;
+import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDto;
+import com.bm_nttdata.credit_ms.service.CreditCardService;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+/**
+ * Implementación del delegado de la API de tarjetas de credito.
+ * Maneja las peticiones HTTP recibidas por los endpoints de la API,
+ * delegando la lógica de negocio al servicio correspondiente y
+ * transformando las respuestas al formato requerido por la API.
+ */
 @Slf4j
 @Component
-public class CreditCardApiDelegateImpl implements CreditCardApiDelegate{
+public class CreditCardApiDelegateImpl implements CreditCardApiDelegate {
 
     @Autowired
-    private ICreditCardService creditCardService;
+    private CreditCardService creditCardService;
 
     @Autowired
     private CreditCardMapper creditCardMapper;
@@ -29,10 +40,10 @@ public class CreditCardApiDelegateImpl implements CreditCardApiDelegate{
     private OperationResponseMapper responseMapper;
 
     @Override
-    public ResponseEntity<List<CreditCardResponseDTO>> getAllCreditCars(String customerId) {
+    public ResponseEntity<List<CreditCardResponseDto>> getAllCreditCars(String customerId) {
 
         log.info("Getting credit cards for customer: {}", customerId);
-        List<CreditCardResponseDTO> creditCardList = creditCardService.getAllCreditCards(customerId)
+        List<CreditCardResponseDto> creditCardList = creditCardService.getAllCreditCards(customerId)
                 .stream()
                 .map(creditCardMapper::creditCardEntityToCreditCardResponseDto)
                 .collect(Collectors.toList());
@@ -40,19 +51,22 @@ public class CreditCardApiDelegateImpl implements CreditCardApiDelegate{
     }
 
     @Override
-    public ResponseEntity<CreditCardResponseDTO> getCreditCardById(String id) {
+    public ResponseEntity<CreditCardResponseDto> getCreditCardById(String id) {
 
         log.info("Getting credit card: {}", id);
         CreditCard creditCard = creditCardService.getCreditCardById(id);
-        return ResponseEntity.ok(creditCardMapper.creditCardEntityToCreditCardResponseDto(creditCard));
+        return ResponseEntity.ok(
+                creditCardMapper.creditCardEntityToCreditCardResponseDto(creditCard));
     }
 
     @Override
-    public ResponseEntity<CreditCardResponseDTO> createCreditCard(CreditCardRequestDTO creditCardRequestDTO) {
+    public ResponseEntity<CreditCardResponseDto> createCreditCard(
+            CreditCardRequestDto creditCardRequest) {
 
-        log.info("Creating credit card for customer: {}", creditCardRequestDTO.getCustomerId());
-        CreditCard creditCard = creditCardService.createCreditCard(creditCardRequestDTO);
-        return ResponseEntity.ok(creditCardMapper.creditCardEntityToCreditCardResponseDto(creditCard));
+        log.info("Creating credit card for customer: {}", creditCardRequest.getCustomerId());
+        CreditCard creditCard = creditCardService.createCreditCard(creditCardRequest);
+        return ResponseEntity.ok(
+                creditCardMapper.creditCardEntityToCreditCardResponseDto(creditCard));
     }
 
     @Override
@@ -63,38 +77,48 @@ public class CreditCardApiDelegateImpl implements CreditCardApiDelegate{
     }
 
     @Override
-    public ResponseEntity<ApiResponseDTO> chargeCreditCard(String id, ChargueCreditCardRequestDTO chargueCreditCardRequestDTO) {
+    public ResponseEntity<ApiResponseDto> chargeCreditCard(
+            String id, ChargueCreditCardRequestDto chargueCreditCardRequest) {
 
-        log.info("Generating credit card charges: {}", chargueCreditCardRequestDTO.getCreditCardId());
-        OperationResponseDTO operationResponseDTO = creditCardService.chargeCreditCard(chargueCreditCardRequestDTO);
+        log.info("Generating credit card charges: {}", chargueCreditCardRequest.getCreditCardId());
+        OperationResponseDto operationResponse =
+                creditCardService.chargeCreditCard(chargueCreditCardRequest);
 
-        return ResponseEntity.ok(responseMapper.entityOperationResponseToApiResponseDTO(operationResponseDTO));
+        return ResponseEntity.ok(
+                responseMapper.entityOperationResponseToApiResponseDto(operationResponse));
     }
 
     @Override
-    public ResponseEntity<ApiResponseDTO> paymentCreditCard(PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
+    public ResponseEntity<ApiResponseDto> paymentCreditCard(
+            PaymentCreditProductRequestDto paymentCreditProductRequest) {
 
-        log.info("Processing credit card payment: {}", paymentCreditProductRequestDTO.getCreditId());
-        OperationResponseDTO operationResponseDTO = creditCardService.paymentCreditCard(paymentCreditProductRequestDTO);
+        log.info("Processing credit card payment: {}", paymentCreditProductRequest.getCreditId());
+        OperationResponseDto operationResponse =
+                creditCardService.paymentCreditCard(paymentCreditProductRequest);
 
-        return ResponseEntity.ok(responseMapper.entityOperationResponseToApiResponseDTO(operationResponseDTO));
+        return ResponseEntity.ok(
+                responseMapper.entityOperationResponseToApiResponseDto(operationResponse));
     }
 
     @Override
-    public ResponseEntity<ApiResponseDTO> updateCreditCardBalance(String id, BalanceUpdateRequestDTO balanceUpdateRequestDTO) {
+    public ResponseEntity<ApiResponseDto> updateCreditCardBalance(
+            String id, BalanceUpdateRequestDto balanceUpdateRequest) {
 
         log.info("Updating credit card balance: {}", id);
-        OperationResponseDTO operationResponseDTO = creditCardService.updateCreditCardBalance(id, balanceUpdateRequestDTO);
+        OperationResponseDto operationResponse =
+                creditCardService.updateCreditCardBalance(id, balanceUpdateRequest);
 
-        return ResponseEntity.ok(responseMapper.entityOperationResponseToApiResponseDTO(operationResponseDTO));
+        return ResponseEntity.ok(
+                responseMapper.entityOperationResponseToApiResponseDto(operationResponse));
     }
 
     @Override
-    public ResponseEntity<CreditCardBalanceResponseDTO> getCreditCardBalance(String id) {
+    public ResponseEntity<CreditCardBalanceResponseDto> getCreditCardBalance(String id) {
 
         log.info("Obtaining credit card balance: {}", id);
         CreditCard creditCard = creditCardService.getCreditCardById(id);
 
-        return ResponseEntity.ok(creditCardMapper.creditCardEntityToCreditCardBalanceResponseDto(creditCard));
+        return ResponseEntity.ok(
+                creditCardMapper.creditCardEntityToCreditCardBalanceResponseDto(creditCard));
     }
 }

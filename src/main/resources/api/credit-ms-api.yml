@@ -26,7 +26,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CreditResponseDTO'
+                  $ref: '#/components/schemas/CreditResponseDto'
     post:
       tags:
         - Credit
@@ -37,14 +37,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreditRequestDTO'
+              $ref: '#/components/schemas/CreditRequestDto'
       responses:
         '201':
           description: Credit created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditResponseDTO'
+                $ref: '#/components/schemas/CreditResponseDto'
 
   /credits/{id}:
     get:
@@ -64,7 +64,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditResponseDTO'
+                $ref: '#/components/schemas/CreditResponseDto'
     put:
       tags:
         - Credit
@@ -81,14 +81,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BalanceUpdateRequestDTO'
+              $ref: '#/components/schemas/BalanceUpdateRequestDto'
       responses:
         '201':
           description: Credit updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseDTO'
+                $ref: '#/components/schemas/ApiResponseDto'
 
     delete:
       tags:
@@ -120,14 +120,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentCreditProductRequestDTO'
+              $ref: '#/components/schemas/PaymentCreditProductRequestDto'
       responses:
         '200':
           description: Results of processing credit card payment
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseDTO'
+                $ref: '#/components/schemas/ApiResponseDto'
 
   /credits/{id}/balance:
     get:
@@ -147,7 +147,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditBalanceResponseDTO'
+                $ref: '#/components/schemas/CreditBalanceResponseDto'
   /credit-cards:
     get:
       tags:
@@ -167,7 +167,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CreditCardResponseDTO'
+                  $ref: '#/components/schemas/CreditCardResponseDto'
     post:
       tags:
         - CreditCard
@@ -178,14 +178,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreditCardRequestDTO'
+              $ref: '#/components/schemas/CreditCardRequestDto'
       responses:
         '201':
           description: Credit card created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCardResponseDTO'
+                $ref: '#/components/schemas/CreditCardResponseDto'
   /credit-cards/{id}:
     get:
       tags:
@@ -204,7 +204,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCardResponseDTO'
+                $ref: '#/components/schemas/CreditCardResponseDto'
     put:
       tags:
         - CreditCard
@@ -221,14 +221,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BalanceUpdateRequestDTO'
+              $ref: '#/components/schemas/BalanceUpdateRequestDto'
       responses:
         '200':
           description: Credit card updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseDTO'
+                $ref: '#/components/schemas/ApiResponseDto'
 
     delete:
       tags:
@@ -260,14 +260,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentCreditProductRequestDTO'
+              $ref: '#/components/schemas/PaymentCreditProductRequestDto'
       responses:
         '200':
           description: Results of processing credit card payment
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseDTO'
+                $ref: '#/components/schemas/ApiResponseDto'
 
   /credit-cards/{id}/charge:
     post:
@@ -286,14 +286,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ChargueCreditCardRequestDTO'
+              $ref: '#/components/schemas/ChargueCreditCardRequestDto'
       responses:
         '200':
           description: Results of generating credit card charge
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseDTO'
+                $ref: '#/components/schemas/ApiResponseDto'
 
   /credit-cards/{id}/balance:
     get:
@@ -313,10 +313,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCardBalanceResponseDTO'
+                $ref: '#/components/schemas/CreditCardBalanceResponseDto'
 components:
   schemas:
-    CreditRequestDTO:
+    CreditRequestDto:
       type: object
       required:
         - customerId
@@ -341,7 +341,7 @@ components:
         interestRate:
           type: number
           description: Taza de interez anual
-    CreditResponseDTO:
+    CreditResponseDto:
       type: object
       properties:
         id:
@@ -381,7 +381,7 @@ components:
           type: string
           format: date-time
           description: Fecha de actualización del credito
-    CreditCardRequestDTO:
+    CreditCardRequestDto:
       type: object
       required:
         - customerId
@@ -408,7 +408,7 @@ components:
         interestRate:
           type: number
           description: Taza de interez anual
-    CreditCardResponseDTO:
+    CreditCardResponseDto:
       type: object
       properties:
         id:
@@ -447,7 +447,7 @@ components:
           type: string
           format: date-time
           description: Fecha de actualización de la cuanta bancaria
-    CreditBalanceResponseDTO:
+    CreditBalanceResponseDto:
       type: object
       properties:
         creditId:
@@ -469,7 +469,7 @@ components:
         daysOverdue:
           type: integer
           description: Dias de retrazo
-    CreditCardBalanceResponseDTO:
+    CreditCardBalanceResponseDto:
       type: object
       properties:
         creditCardId:
@@ -484,7 +484,7 @@ components:
         paymentDay:
           type: integer
           description: Dia de pago
-    BalanceUpdateRequestDTO:
+    BalanceUpdateRequestDto:
       type: object
       properties:
         transactionType:
@@ -494,7 +494,7 @@ components:
         transactionAmount:
           type: number
           description: Monto de transaccion
-    ChargueCreditCardRequestDTO:
+    ChargueCreditCardRequestDto:
       type: object
       required:
         - creditCardId
@@ -510,7 +510,7 @@ components:
         chargeAmount:
           type: number
           description: Monto de cargo
-    PaymentCreditProductRequestDTO:
+    PaymentCreditProductRequestDto:
       type: object
       required:
         - creditCardId
@@ -531,7 +531,7 @@ components:
         description:
           type: string
           description: Descripcion de pago
-    ApiResponseDTO:
+    ApiResponseDto:
       type: object
       properties:
         status:

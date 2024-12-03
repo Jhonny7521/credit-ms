@@ -1,26 +1,36 @@
 package com.bm_nttdata.credit_ms.api;
 
-import com.bm_nttdata.credit_ms.DTO.OperationResponseDTO;
+import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
 import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.mapper.CreditMapper;
 import com.bm_nttdata.credit_ms.mapper.OperationResponseMapper;
-import com.bm_nttdata.credit_ms.model.*;
-import com.bm_nttdata.credit_ms.service.ICreditService;
+import com.bm_nttdata.credit_ms.model.ApiResponseDto;
+import com.bm_nttdata.credit_ms.model.BalanceUpdateRequestDto;
+import com.bm_nttdata.credit_ms.model.CreditBalanceResponseDto;
+import com.bm_nttdata.credit_ms.model.CreditRequestDto;
+import com.bm_nttdata.credit_ms.model.CreditResponseDto;
+import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDto;
+import com.bm_nttdata.credit_ms.service.CreditService;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+/**
+ * Implementación del delegado de la API de creditos.
+ * Maneja las peticiones HTTP recibidas por los endpoints de la API,
+ * delegando la lógica de negocio al servicio correspondiente y
+ * transformando las respuestas al formato requerido por la API.
+ */
 @Slf4j
 @Component
-public class CreditApiDelegateImpl implements CreditApiDelegate{
+public class CreditApiDelegateImpl implements CreditApiDelegate {
 
     @Autowired
-    private ICreditService creditService;
+    private CreditService creditService;
 
     @Autowired
     private CreditMapper creditMapper;
@@ -29,9 +39,10 @@ public class CreditApiDelegateImpl implements CreditApiDelegate{
     private OperationResponseMapper responseMapper;
 
     @Override
-    public ResponseEntity<List<CreditResponseDTO>> getAllCredits(String customerId){
+    public ResponseEntity<List<CreditResponseDto>> getAllCredits(String customerId) {
+
         log.info("Getting credits for customer: {}", customerId);
-        List<CreditResponseDTO> credits = creditService.getAllCredits(customerId)
+        List<CreditResponseDto> credits = creditService.getAllCredits(customerId)
                 .stream()
                 .map(creditMapper::creditEntityToCreditResponseDto)
                 .collect(Collectors.toList());
@@ -39,47 +50,58 @@ public class CreditApiDelegateImpl implements CreditApiDelegate{
     }
 
     @Override
-    public ResponseEntity<CreditResponseDTO> getCreditById(String id){
+    public ResponseEntity<CreditResponseDto> getCreditById(String id) {
+
         log.info("Getting credit: {}", id);
         Credit credit = creditService.getCreditById(id);
         return ResponseEntity.ok(creditMapper.creditEntityToCreditResponseDto(credit));
     }
 
     @Override
-    public ResponseEntity<CreditResponseDTO> createCredit(CreditRequestDTO creditRequestDTO) {
-        log.info("Creating credit for customer: {}", creditRequestDTO.getCustomerId());
-        Credit credit = creditService.createCredit(creditRequestDTO);
+    public ResponseEntity<CreditResponseDto> createCredit(CreditRequestDto creditRequest) {
+
+        log.info("Creating credit for customer: {}", creditRequest.getCustomerId());
+        Credit credit = creditService.createCredit(creditRequest);
         return ResponseEntity.ok(creditMapper.creditEntityToCreditResponseDto(credit));
     }
 
     @Override
     public ResponseEntity<Void> deleteCredit(String id) {
+
         log.info("Deleting credit: {}", id);
         creditService.deleteCredit(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @Override
-    public ResponseEntity<ApiResponseDTO> paymentCredit(PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
+    public ResponseEntity<ApiResponseDto> paymentCredit(
+            PaymentCreditProductRequestDto paymentCreditProductRequest) {
 
-        log.info("Processing credit payment: {}", paymentCreditProductRequestDTO.getCreditId());
-        OperationResponseDTO operationResponseDTO = creditService.paymentCredit(paymentCreditProductRequestDTO);
+        log.info("Processing credit payment: {}", paymentCreditProductRequest.getCreditId());
+        OperationResponseDto operationResponse =
+                creditService.paymentCredit(paymentCreditProductRequest);
 
-        return ResponseEntity.ok(responseMapper.entityOperationResponseToApiResponseDTO(operationResponseDTO));
+        return ResponseEntity.ok(
+                responseMapper.entityOperationResponseToApiResponseDto(operationResponse));
     }
 
     @Override
-    public ResponseEntity<ApiResponseDTO> updateCreditBalance(String id, BalanceUpdateRequestDTO balanceUpdateRequestDTO) {
+    public ResponseEntity<ApiResponseDto> updateCreditBalance(
+            String id, BalanceUpdateRequestDto balanceUpdateRequest) {
+
         log.info("Updating balance of credit: {}", id);
-        OperationResponseDTO operationResponseDTO = creditService.updateCreditBalance(id, balanceUpdateRequestDTO);
-        return ResponseEntity.ok(responseMapper.entityOperationResponseToApiResponseDTO(operationResponseDTO));
+        OperationResponseDto operationResponse =
+                creditService.updateCreditBalance(id, balanceUpdateRequest);
+        return ResponseEntity.ok(
+                responseMapper.entityOperationResponseToApiResponseDto(operationResponse));
     }
 
     @Override
-    public ResponseEntity<CreditBalanceResponseDTO> getCreditBalance(String id) {
+    public ResponseEntity<CreditBalanceResponseDto> getCreditBalance(String id) {
+
         log.info("Getting balance for credit: {}", id);
         Credit account = creditService.getCreditById(id);
-        return ResponseEntity.ok(creditMapper.creditEntityToCreditBalanceResponseDto(account));
-
+        return ResponseEntity.ok(
+                creditMapper.creditEntityToCreditBalanceResponseDto(account));
     }
 }
