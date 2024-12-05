@@ -1,6 +1,7 @@
 package com.bm_nttdata.credit_ms.repository;
 
 import com.bm_nttdata.credit_ms.entity.Credit;
+import com.bm_nttdata.credit_ms.enums.CreditStatusEnum;
 import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -20,6 +21,14 @@ public interface CreditRepository extends MongoRepository<Credit, String> {
      * @return Lista de créditos del cliente
      */
     List<Credit> findByCustomerId(String id);
+
+    /**
+     * Busca todos los créditos segun su estatus.
+     *
+     * @param status estatus del credito
+     * @return Lista de créditos que cumplen con los criterios
+     */
+    List<Credit> findByStatus(CreditStatusEnum status);
 
     /**
      * Cuenta el número de créditos de un cliente que superan un monto específico (0).
