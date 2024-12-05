@@ -4,6 +4,7 @@ import com.bm_nttdata.credit_ms.client.CustomerClient;
 import com.bm_nttdata.credit_ms.dto.CustomerDto;
 import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
 import com.bm_nttdata.credit_ms.entity.CreditCard;
+import com.bm_nttdata.credit_ms.entity.DailyCreditBalance;
 import com.bm_nttdata.credit_ms.enums.CardStatusEnum;
 import com.bm_nttdata.credit_ms.exception.ApiInvalidRequestException;
 import com.bm_nttdata.credit_ms.exception.BusinessRuleException;
@@ -15,13 +16,20 @@ import com.bm_nttdata.credit_ms.model.ChargueCreditCardRequestDto;
 import com.bm_nttdata.credit_ms.model.CreditCardRequestDto;
 import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDto;
 import com.bm_nttdata.credit_ms.repository.CreditCardRepository;
+import com.bm_nttdata.credit_ms.repository.DailyCreditBalanceRepository;
 import com.bm_nttdata.credit_ms.service.CreditCardInstallmentService;
 import com.bm_nttdata.credit_ms.service.CreditCardService;
 import com.bm_nttdata.credit_ms.util.CardNumberGenerator;
 import com.bm_nttdata.credit_ms.util.MonthlyInstallmentCalculator;
 import feign.FeignException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +48,9 @@ public class CreditCardServiceImpl implements CreditCardService {
 
     @Autowired
     private CreditCardRepository creditCardRepository;
+
+    @Autowired
+    private DailyCreditBalanceRepository dailyCreditBalanceRepository;
 
     @Autowired
     private CreditCardMapper creditCardMapper;
@@ -317,6 +328,44 @@ public class CreditCardServiceImpl implements CreditCardService {
         } catch (Exception e) {
             log.error("Error deleting credit {}: {}", id, e.getMessage());
             throw new ServiceException("Error deleting credit: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene todos los saldos diarios de un mes en especifico.
+     *
+     * @param creditCardId ID de la tarjeta de crédito
+     * @param searchMonth mes de busqueda de datos
+     * @return Lista de saldos diarios de la tarjeta de crédito
+     */
+    @Override
+    public List<DailyCreditBalance> getAllCreditCardDailyBalances(
+            String creditCardId, LocalDate searchMonth) {
+
+        try {
+            YearMonth month = YearMonth.from(searchMonth);
+            LocalDate startDate = month.atDay(1);
+            LocalDate endDate = month.atEndOfMonth();
+
+            // Convertir LocalDate a ZonedDateTime en UTC
+            ZonedDateTime startDateTime = startDate.atStartOfDay(ZoneOffset.UTC);
+            ZonedDateTime endDateTime = endDate.atTime(LocalTime.MAX).atZone(ZoneOffset.UTC);
+
+            // Convertir a Date para la consulta
+            Date startDateMongo = Date.from(startDateTime.toInstant());
+            Date endDateMongo = Date.from(endDateTime.toInstant());
+
+            List<DailyCreditBalance> dailyBalanceList =
+                    dailyCreditBalanceRepository.findByCreditProductIdAndDateBetween(
+                            creditCardId,
+                            startDateMongo,
+                            endDateMongo);
+            log.info("Balances found: " + dailyBalanceList);
+            return dailyBalanceList;
+        } catch (Exception e) {
+            log.error("Unexpected error while getting daily balances: {}", e.getMessage());
+            throw new ServiceException(
+                    "Unexpected error while getting daily balances" + e.getMessage());
         }
     }
 

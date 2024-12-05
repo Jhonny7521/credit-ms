@@ -2,9 +2,11 @@ package com.bm_nttdata.credit_ms.service;
 
 import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
 import com.bm_nttdata.credit_ms.entity.Credit;
+import com.bm_nttdata.credit_ms.entity.DailyCreditBalance;
 import com.bm_nttdata.credit_ms.model.BalanceUpdateRequestDto;
 import com.bm_nttdata.credit_ms.model.CreditRequestDto;
 import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDto;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -63,4 +65,12 @@ public interface CreditService {
      */
     void deleteCredit(String id);
 
+    /**
+     * Obtiene todos los saldos diarios de un mes en especifico.
+     *
+     * @param creditId ID del crédito
+     * @param searchMonth mes de busqueda de datos
+     * @return Lista de saldos diarios del crédito
+     */
+    List<DailyCreditBalance> getAllCreditDailyBalances(String creditId, LocalDate searchMonth);
 }

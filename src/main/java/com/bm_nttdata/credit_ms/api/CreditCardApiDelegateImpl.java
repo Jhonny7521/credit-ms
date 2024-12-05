@@ -3,6 +3,7 @@ package com.bm_nttdata.credit_ms.api;
 import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
 import com.bm_nttdata.credit_ms.entity.CreditCard;
 import com.bm_nttdata.credit_ms.mapper.CreditCardMapper;
+import com.bm_nttdata.credit_ms.mapper.DailyCreditBalanceMapper;
 import com.bm_nttdata.credit_ms.mapper.OperationResponseMapper;
 import com.bm_nttdata.credit_ms.model.ApiResponseDto;
 import com.bm_nttdata.credit_ms.model.BalanceUpdateRequestDto;
@@ -10,8 +11,10 @@ import com.bm_nttdata.credit_ms.model.ChargueCreditCardRequestDto;
 import com.bm_nttdata.credit_ms.model.CreditCardBalanceResponseDto;
 import com.bm_nttdata.credit_ms.model.CreditCardRequestDto;
 import com.bm_nttdata.credit_ms.model.CreditCardResponseDto;
+import com.bm_nttdata.credit_ms.model.DailyBalanceDto;
 import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDto;
 import com.bm_nttdata.credit_ms.service.CreditCardService;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +41,9 @@ public class CreditCardApiDelegateImpl implements CreditCardApiDelegate {
 
     @Autowired
     private OperationResponseMapper responseMapper;
+
+    @Autowired
+    private DailyCreditBalanceMapper creditBalanceMapper;
 
     @Override
     public ResponseEntity<List<CreditCardResponseDto>> getAllCreditCars(String customerId) {
@@ -74,6 +80,18 @@ public class CreditCardApiDelegateImpl implements CreditCardApiDelegate {
         log.info("Deleting credit card: {}", id);
         creditCardService.deleteCredit(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @Override
+    public ResponseEntity<List<DailyBalanceDto>> getAllCreditCardDailyBalances(
+            String id, LocalDate searchMonth) {
+        log.info("Getting daily balances for credit card: {}", id);
+        List<DailyBalanceDto> dailyCardBalances =
+                creditCardService.getAllCreditCardDailyBalances(id, searchMonth)
+                        .stream()
+                        .map(creditBalanceMapper::dailyBalanceToDto)
+                        .collect(Collectors.toList());
+        return ResponseEntity.ok(dailyCardBalances);
     }
 
     @Override

@@ -3,14 +3,17 @@ package com.bm_nttdata.credit_ms.api;
 import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
 import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.mapper.CreditMapper;
+import com.bm_nttdata.credit_ms.mapper.DailyCreditBalanceMapper;
 import com.bm_nttdata.credit_ms.mapper.OperationResponseMapper;
 import com.bm_nttdata.credit_ms.model.ApiResponseDto;
 import com.bm_nttdata.credit_ms.model.BalanceUpdateRequestDto;
 import com.bm_nttdata.credit_ms.model.CreditBalanceResponseDto;
 import com.bm_nttdata.credit_ms.model.CreditRequestDto;
 import com.bm_nttdata.credit_ms.model.CreditResponseDto;
+import com.bm_nttdata.credit_ms.model.DailyBalanceDto;
 import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDto;
 import com.bm_nttdata.credit_ms.service.CreditService;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,9 @@ public class CreditApiDelegateImpl implements CreditApiDelegate {
 
     @Autowired
     private CreditMapper creditMapper;
+
+    @Autowired
+    private DailyCreditBalanceMapper creditBalanceMapper;
 
     @Autowired
     private OperationResponseMapper responseMapper;
@@ -71,6 +77,18 @@ public class CreditApiDelegateImpl implements CreditApiDelegate {
         log.info("Deleting credit: {}", id);
         creditService.deleteCredit(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @Override
+    public ResponseEntity<List<DailyBalanceDto>> getAllCreditDailyBalances(
+            String id, LocalDate searchMonth) {
+        log.info("Getting daily balances for credit: {}", id);
+        List<DailyBalanceDto> dailyBalances =
+                creditService.getAllCreditDailyBalances(id, searchMonth)
+                .stream()
+                .map(creditBalanceMapper::dailyBalanceToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dailyBalances);
     }
 
     @Override

@@ -148,6 +148,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreditBalanceResponseDto'
+
+  /credits/{id}/daily-balance:
+    get:
+      tags:
+        - Credit
+      summary: Get all daily balances
+      operationId: getAllCreditDailyBalances
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: searchMonth
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of daily balances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DailyBalanceDto'
+
   /credit-cards:
     get:
       tags:
@@ -314,6 +343,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreditCardBalanceResponseDto'
+
+  /credit-cards/{id}/daily-balance:
+    get:
+      tags:
+        - CreditCard
+      summary: Get all daily balances
+      operationId: getAllCreditCardDailyBalances
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: searchMonth
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of daily balances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DailyBalanceDto'
 components:
   schemas:
     CreditRequestDto:
@@ -540,3 +597,20 @@ components:
           type: string
         error:
           type: string
+
+    DailyBalanceDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identificador de saldo diario
+        creditProductId:
+          type: string
+          description: Identificador de producto de crédito
+        balanceDate:
+          type: string
+          format: date
+          description: fecha de balance
+        balanceAmount:
+          type: number
+          description: Monto de saldo

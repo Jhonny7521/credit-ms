@@ -2,10 +2,12 @@ package com.bm_nttdata.credit_ms.service;
 
 import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
 import com.bm_nttdata.credit_ms.entity.CreditCard;
+import com.bm_nttdata.credit_ms.entity.DailyCreditBalance;
 import com.bm_nttdata.credit_ms.model.BalanceUpdateRequestDto;
 import com.bm_nttdata.credit_ms.model.ChargueCreditCardRequestDto;
 import com.bm_nttdata.credit_ms.model.CreditCardRequestDto;
 import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDto;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -72,4 +74,14 @@ public interface CreditCardService {
      * @param id ID de la tarjeta de crédito a eliminar
      */
     void deleteCredit(String id);
+
+    /**
+     * Obtiene todos los saldos diarios de un mes en especifico.
+     *
+     * @param creditCardId ID de la tarjeta de crédito
+     * @param searchMonth mes de busqueda de datos
+     * @return Lista de saldos diarios de la tarjeta de crédito
+     */
+    List<DailyCreditBalance> getAllCreditCardDailyBalances(
+            String creditCardId, LocalDate searchMonth);
 }

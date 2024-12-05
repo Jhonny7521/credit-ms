@@ -4,6 +4,7 @@ import com.bm_nttdata.credit_ms.client.CustomerClient;
 import com.bm_nttdata.credit_ms.dto.CustomerDto;
 import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
 import com.bm_nttdata.credit_ms.entity.Credit;
+import com.bm_nttdata.credit_ms.entity.DailyCreditBalance;
 import com.bm_nttdata.credit_ms.enums.CreditStatusEnum;
 import com.bm_nttdata.credit_ms.exception.ApiInvalidRequestException;
 import com.bm_nttdata.credit_ms.exception.BusinessRuleException;
@@ -14,6 +15,7 @@ import com.bm_nttdata.credit_ms.model.BalanceUpdateRequestDto;
 import com.bm_nttdata.credit_ms.model.CreditRequestDto;
 import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDto;
 import com.bm_nttdata.credit_ms.repository.CreditRepository;
+import com.bm_nttdata.credit_ms.repository.DailyCreditBalanceRepository;
 import com.bm_nttdata.credit_ms.service.CreditPaymentScheduleService;
 import com.bm_nttdata.credit_ms.service.CreditService;
 import com.bm_nttdata.credit_ms.util.MonthlyInstallmentCalculator;
@@ -21,6 +23,11 @@ import feign.FeignException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +46,10 @@ public class CreditServiceImpl implements CreditService {
 
     @Autowired
     private CreditRepository creditRepository;
+
+    @Autowired
+    private DailyCreditBalanceRepository dailyCreditBalanceRepository;
+
     @Autowired
     private CreditMapper creditMapper;
     @Autowired
@@ -235,6 +246,44 @@ public class CreditServiceImpl implements CreditService {
         } catch (Exception e) {
             log.error("Error deleting credit {}: {}", id, e.getMessage());
             throw new ServiceException("Error deleting credit: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene todos los saldos diarios de un mes en especifico.
+     *
+     * @param creditId ID del crédito
+     * @param searchMonth mes de busqueda de datos
+     * @return Lista de saldos diarios del crédito
+     */
+    @Override
+    public List<DailyCreditBalance> getAllCreditDailyBalances(
+            String creditId, LocalDate searchMonth) {
+
+        try {
+            YearMonth month = YearMonth.from(searchMonth);
+            LocalDate startDate = month.atDay(1);
+            LocalDate endDate = month.atEndOfMonth();
+
+            // Convertir LocalDate a ZonedDateTime en UTC
+            ZonedDateTime startDateTime = startDate.atStartOfDay(ZoneOffset.UTC);
+            ZonedDateTime endDateTime = endDate.atTime(LocalTime.MAX).atZone(ZoneOffset.UTC);
+
+            // Convertir a Date para la consulta
+            Date startDateMongo = Date.from(startDateTime.toInstant());
+            Date endDateMongo = Date.from(endDateTime.toInstant());
+
+            List<DailyCreditBalance> dailyBalanceList =
+                    dailyCreditBalanceRepository.findByCreditProductIdAndDateBetween(
+                            creditId,
+                            startDateMongo,
+                            endDateMongo);
+            log.info("Balances found: " + dailyBalanceList);
+            return dailyBalanceList;
+        } catch (Exception e) {
+            log.error("Unexpected error while getting daily balances: {}", e.getMessage());
+            throw new ServiceException(
+                    "Unexpected error while getting daily balances" + e.getMessage());
         }
     }
 
