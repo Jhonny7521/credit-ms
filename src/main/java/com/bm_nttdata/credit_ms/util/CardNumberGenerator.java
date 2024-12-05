@@ -20,7 +20,7 @@ public class CardNumberGenerator {
      * @return String con el número de tarjeta de crédito generado en formato XXXX-XXXX-XXXX-XXXX
      */
     public String generateCardNumber() {
-        return String.format("",
+        return String.format("%04d-%04d-%04d-%04d",
                 random.nextInt(10000),
                 random.nextInt(10000),
                 random.nextInt(10000),
