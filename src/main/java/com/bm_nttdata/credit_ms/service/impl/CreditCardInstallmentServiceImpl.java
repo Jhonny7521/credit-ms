@@ -1,5 +1,6 @@
 package com.bm_nttdata.credit_ms.service.impl;
 
+import com.bm_nttdata.credit_ms.dto.PaymentDetailsDto;
 import com.bm_nttdata.credit_ms.entity.CreditCardInstallment;
 import com.bm_nttdata.credit_ms.enums.InstallmentStatusEnum;
 import com.bm_nttdata.credit_ms.exception.BusinessRuleException;
@@ -103,11 +104,11 @@ public class CreditCardInstallmentServiceImpl implements CreditCardInstallmentSe
      *
      * @param creditCardId ID de la tarjeta de crédito
      * @param paymentDay Día de pago establecido
-     * @return Monto a pagar en el mes actual
+     * @return Dto con el detalle a pagar en el mes actual
      * @throws ServiceException si ocurre un error durante el cálculo
      */
     @Override
-    public BigDecimal calculateCurrentMonthPayment(String creditCardId, int paymentDay) {
+    public PaymentDetailsDto calculateCurrentMonthPayment(String creditCardId, int paymentDay) {
 
         log.info("Calculating current month's credit card payment: {}", creditCardId);
 
@@ -115,7 +116,9 @@ public class CreditCardInstallmentServiceImpl implements CreditCardInstallmentSe
             List<CreditCardInstallment> creditCardInstallmentList =
                     getCurrentMonthDueInstallments(creditCardId, paymentDay);
 
-            BigDecimal totalAmount = BigDecimal.ZERO;
+            BigDecimal totalInstallment = BigDecimal.ZERO;
+            BigDecimal totalInterest = BigDecimal.ZERO;
+            PaymentDetailsDto paymentDetails = new PaymentDetailsDto();
 
             for (CreditCardInstallment installment : creditCardInstallmentList) {
                 BigDecimal baseAmount = installment.getTotalAmount();
@@ -146,6 +149,8 @@ public class CreditCardInstallmentServiceImpl implements CreditCardInstallmentSe
                         installment.setUpdatedAt(LocalDateTime.now());
 
                         cardInstallmentRepository.save(installment);
+
+                        totalInterest = totalInterest.add(interestAmount);
                     } catch (Exception e) {
                         log.error(
                                 "Error updating overdue installment {}: {}",
@@ -155,10 +160,14 @@ public class CreditCardInstallmentServiceImpl implements CreditCardInstallmentSe
                     }
                 }
 
-                totalAmount = totalAmount.add(baseAmount).add(interestAmount);
+                totalInstallment = totalInstallment.add(baseAmount);
             }
 
-            return totalAmount;
+            paymentDetails.setPaymentAmount(totalInstallment);
+            paymentDetails.setPaymentFee(totalInterest);
+            paymentDetails.setTotalPayment(totalInstallment.add(totalInterest));
+
+            return paymentDetails;
 
         } catch (Exception e) {
             log.error("Error calculating current month payment: {}", e.getMessage());
@@ -221,12 +230,12 @@ public class CreditCardInstallmentServiceImpl implements CreditCardInstallmentSe
      * @param installmentAmount Monto de la cuota a pagar
      * @param creditCardId ID de la tarjeta de crédito
      * @param paymentDay Día de pago
-     * @return Monto efectivamente pagado
+     * @return Dto con el detalle de lo pagado
      * @throws BusinessRuleException si el monto de pago es diferente al monto de deuda
      * @throws ServiceException si ocurre un error durante el pago
      */
     @Override
-    public BigDecimal payBillMonth(
+    public PaymentDetailsDto payBillMonth(
             BigDecimal installmentAmount, String creditCardId, int paymentDay) {
 
         log.info("Paying monthly credit card bill: {}", creditCardId);
@@ -236,9 +245,10 @@ public class CreditCardInstallmentServiceImpl implements CreditCardInstallmentSe
                     getCurrentMonthDueInstallments(creditCardId, paymentDay);
 
             BigDecimal amountPaid = BigDecimal.ZERO;
-            BigDecimal totalAmount = calculateCurrentMonthPayment(creditCardId, paymentDay);
+            PaymentDetailsDto paymentDetails =
+                    calculateCurrentMonthPayment(creditCardId, paymentDay);
 
-            if (installmentAmount.compareTo(totalAmount) != 0) {
+            if (installmentAmount.compareTo(paymentDetails.getTotalPayment()) != 0) {
                 throw new BusinessRuleException(
                         "Payment amount is different than monthly debt amount");
             }
@@ -253,7 +263,7 @@ public class CreditCardInstallmentServiceImpl implements CreditCardInstallmentSe
             }
             log.info(" *** Successful payment *** ");
 
-            return amountPaid;
+            return paymentDetails;
         } catch (BusinessRuleException | CreditNotFoundException e) {
             throw e;
         } catch (Exception e) {

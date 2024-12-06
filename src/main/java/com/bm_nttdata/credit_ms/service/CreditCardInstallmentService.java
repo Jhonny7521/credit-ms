@@ -1,5 +1,6 @@
 package com.bm_nttdata.credit_ms.service;
 
+import com.bm_nttdata.credit_ms.dto.PaymentDetailsDto;
 import java.math.BigDecimal;
 
 /**
@@ -13,9 +14,9 @@ public interface CreditCardInstallmentService {
      *
      * @param creditCardId ID de la tarjeta de crédito
      * @param paymentDay Día de pago establecido
-     * @return Monto a pagar en el mes actual
+     * @return Dto con el detalle a pagar en el mes actual
      */
-    BigDecimal calculateCurrentMonthPayment(String creditCardId, int paymentDay);
+    PaymentDetailsDto calculateCurrentMonthPayment(String creditCardId, int paymentDay);
 
     /**
      * Crea los cargos para un plan de cuotas de tarjeta de crédito.
@@ -35,8 +36,9 @@ public interface CreditCardInstallmentService {
      * @param installmentAmount Monto de la cuota a pagar
      * @param creditCardId ID de la tarjeta de crédito
      * @param paymentDate Fecha de pago
-     * @return Monto efectivamente pagado
+     * @return Dto con el detalle de lo pagado pagado
      */
-    BigDecimal payBillMonth(BigDecimal installmentAmount, String creditCardId, int paymentDate);
+    PaymentDetailsDto payBillMonth(
+            BigDecimal installmentAmount, String creditCardId, int paymentDate);
 
 }

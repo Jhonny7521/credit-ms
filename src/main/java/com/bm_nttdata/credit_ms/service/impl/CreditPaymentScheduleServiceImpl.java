@@ -1,5 +1,6 @@
 package com.bm_nttdata.credit_ms.service.impl;
 
+import com.bm_nttdata.credit_ms.dto.PaymentDetailsDto;
 import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.entity.CreditPaymentSchedule;
 import com.bm_nttdata.credit_ms.enums.InstallmentStatusEnum;
@@ -121,11 +122,11 @@ public class CreditPaymentScheduleServiceImpl implements CreditPaymentScheduleSe
      *
      * @param creditId ID del crédito
      * @param installmentNumber Número de cuota
-     * @return Monto total a pagar incluyendo intereses moratorios si aplican
+     * @return Dto con el detalle a pagar en el mes
      * @throws ServiceException si ocurre un error durante el cálculo
      */
     @Override
-    public BigDecimal calculateMonthlyPayment(String creditId, int installmentNumber) {
+    public PaymentDetailsDto calculateMonthlyPayment(String creditId, int installmentNumber) {
 
         log.info("Calculating the monthly payment.: {}", creditId);
 
@@ -134,12 +135,14 @@ public class CreditPaymentScheduleServiceImpl implements CreditPaymentScheduleSe
             List<CreditPaymentSchedule> creditInstallmentList =
                     getMonthInstallments(creditId, installmentNumber);
 
-            BigDecimal totalAmount = BigDecimal.ZERO;
+            BigDecimal totalInstallment = BigDecimal.ZERO;
+            BigDecimal totalInterest = BigDecimal.ZERO;
+            PaymentDetailsDto paymentDetails = new PaymentDetailsDto();
 
             for (CreditPaymentSchedule creditInstallment : creditInstallmentList) {
 
                 BigDecimal installmentAmount = creditInstallment.getInstallmentAmount();
-                BigDecimal interestAmount = BigDecimal.ZERO;
+                BigDecimal interestAmount;
 
                 if (isOverdue(creditInstallment)) {
                     try {
@@ -166,6 +169,7 @@ public class CreditPaymentScheduleServiceImpl implements CreditPaymentScheduleSe
 
                         paymentScheduleRepository.save(creditInstallment);
 
+                        totalInterest = totalInterest.add(interestAmount);
                     } catch (Exception e) {
                         log.error("Error updating overdue installment {}: {}",
                                 creditInstallment.getId(), e.getMessage());
@@ -174,10 +178,14 @@ public class CreditPaymentScheduleServiceImpl implements CreditPaymentScheduleSe
                     }
                 }
 
-                totalAmount = totalAmount.add(installmentAmount).add(interestAmount);
+                totalInstallment = totalInstallment.add(installmentAmount);
             }
 
-            return totalAmount;
+            paymentDetails.setPaymentAmount(totalInstallment);
+            paymentDetails.setPaymentFee(totalInterest);
+            paymentDetails.setTotalPayment(totalInstallment.add(totalInterest));
+
+            return paymentDetails;
         } catch (Exception e) {
             log.error("Error calculating monthly payment: {}", e.getMessage());
             throw new ServiceException("Error calculating monthly payment" + e.getMessage());
@@ -192,12 +200,12 @@ public class CreditPaymentScheduleServiceImpl implements CreditPaymentScheduleSe
      * @param paymentAmount Monto del pago
      * @param creditId ID del crédito
      * @param paymentDay Día de pago
-     * @return Monto total pagado
+     * @return Dto con el detalle de lo pagado
      * @throws BusinessRuleException si el monto del pago no coincide con la deuda
      * @throws ServiceException si ocurre un error durante el procesamiento
      */
     @Override
-    public BigDecimal payMonthlyInstallment(
+    public PaymentDetailsDto payMonthlyInstallment(
             BigDecimal paymentAmount, String creditId, int paymentDay) {
 
         log.info("Paying monthly installment - credit: {}", creditId);
@@ -207,9 +215,9 @@ public class CreditPaymentScheduleServiceImpl implements CreditPaymentScheduleSe
                     getMonthInstallments(creditId, paymentDay);
 
             BigDecimal amountPaid = BigDecimal.ZERO;
-            BigDecimal totalAmount = calculateMonthlyPayment(creditId, paymentDay);
+            PaymentDetailsDto paymentDetails = calculateMonthlyPayment(creditId, paymentDay);
 
-            if (paymentAmount.compareTo(totalAmount) != 0) {
+            if (paymentAmount.compareTo(paymentDetails.getTotalPayment()) != 0) {
                 throw new BusinessRuleException(
                         "Payment amount is different than monthly debt amount");
             }
@@ -225,7 +233,7 @@ public class CreditPaymentScheduleServiceImpl implements CreditPaymentScheduleSe
 
             log.info(" *** Successful payment *** ");
 
-            return amountPaid;
+            return paymentDetails;
         } catch (BusinessRuleException | CreditNotFoundException e) {
             throw e;
         } catch (Exception e) {

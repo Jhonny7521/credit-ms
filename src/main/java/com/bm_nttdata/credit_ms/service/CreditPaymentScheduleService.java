@@ -1,5 +1,6 @@
 package com.bm_nttdata.credit_ms.service;
 
+import com.bm_nttdata.credit_ms.dto.PaymentDetailsDto;
 import com.bm_nttdata.credit_ms.entity.Credit;
 import java.math.BigDecimal;
 
@@ -16,9 +17,9 @@ public interface CreditPaymentScheduleService {
      *
      * @param creditId ID del crédito
      * @param installmentNumber Número de cuota
-     * @return Monto total a pagar incluyendo intereses moratorios si aplican
+     * @return Dto con el detalle a pagar en el mes actual
      */
-    BigDecimal calculateMonthlyPayment(String creditId, int installmentNumber);
+    PaymentDetailsDto calculateMonthlyPayment(String creditId, int installmentNumber);
 
     /**
      * Crea un cronograma de pagos para un crédito.
@@ -36,7 +37,7 @@ public interface CreditPaymentScheduleService {
      * @param paymentAmount Monto del pago
      * @param id ID del crédito
      * @param paymentDay Día de pago
-     * @return Monto total pagado
+     * @return Dto con el detalle de lo pagado
      */
-    BigDecimal payMonthlyInstallment(BigDecimal paymentAmount, String id, int paymentDay);
+    PaymentDetailsDto payMonthlyInstallment(BigDecimal paymentAmount, String id, int paymentDay);
 }

@@ -3,6 +3,7 @@ package com.bm_nttdata.credit_ms.service.impl;
 import com.bm_nttdata.credit_ms.client.CustomerClient;
 import com.bm_nttdata.credit_ms.dto.CustomerDto;
 import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
+import com.bm_nttdata.credit_ms.dto.PaymentDetailsDto;
 import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.entity.DailyCreditBalance;
 import com.bm_nttdata.credit_ms.enums.CreditStatusEnum;
@@ -145,13 +146,13 @@ public class CreditServiceImpl implements CreditService {
 
         try {
             Credit credit = getCreditById(paymentCreditProductRequest.getCreditId());
-            BigDecimal amountPaid = paymentScheduleService.payMonthlyInstallment(
+            PaymentDetailsDto paymentDetails = paymentScheduleService.payMonthlyInstallment(
                     paymentCreditProductRequest.getAmount(),
                     credit.getId(),
                     credit.getPaymentDay());
 
             BalanceUpdateRequestDto balanceUpdateRequest = new BalanceUpdateRequestDto();
-            balanceUpdateRequest.setTransactionAmount(amountPaid);
+            balanceUpdateRequest.setTransactionAmount(paymentDetails.getPaymentAmount());
             balanceUpdateRequest.setTransactionType(
                     BalanceUpdateRequestDto.TransactionTypeEnum.PAYMENT);
 
