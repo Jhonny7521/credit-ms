@@ -2,8 +2,11 @@ package com.bm_nttdata.credit_ms.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -14,6 +17,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Document(collection = "daily_credit_balances")
 public class DailyCreditBalance {
 
