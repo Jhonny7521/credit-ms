@@ -34,6 +34,22 @@
 		<org.lombok-mapstruct-binding>0.2.0</org.lombok-mapstruct-binding>
 	</properties>
 	<dependencies>
+		<!--Dependencias para implementar el patron Circuit-Braker-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-aop -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+			<version>3.4.0</version>
+		</dependency>
+		<!--Dependencias para implementar el patron Circuit-Braker-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>

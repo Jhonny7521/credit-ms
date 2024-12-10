@@ -14,6 +14,7 @@ import com.bm_nttdata.credit_ms.model.CreditCardResponseDto;
 import com.bm_nttdata.credit_ms.model.DailyBalanceDto;
 import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDto;
 import com.bm_nttdata.credit_ms.service.CreditCardService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -66,6 +67,7 @@ public class CreditCardApiDelegateImpl implements CreditCardApiDelegate {
     }
 
     @Override
+    @CircuitBreaker(name = "createCreditCard", fallbackMethod = "createCreditCardFallback")
     public ResponseEntity<CreditCardResponseDto> createCreditCard(
             CreditCardRequestDto creditCardRequest) {
 
@@ -138,5 +140,12 @@ public class CreditCardApiDelegateImpl implements CreditCardApiDelegate {
 
         return ResponseEntity.ok(
                 creditCardMapper.creditCardEntityToCreditCardBalanceResponseDto(creditCard));
+    }
+
+    private ResponseEntity<CreditCardResponseDto> createCreditCardFallback(
+            CreditCardRequestDto creditCardRequest, Exception e) {
+        log.error("Fallback for create credit card: {}", e.getMessage());
+        return new ResponseEntity(
+                "We are experiencing some errors. Please try again later", HttpStatus.OK);
     }
 }
