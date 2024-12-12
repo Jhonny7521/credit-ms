@@ -67,6 +67,13 @@ public class CreditCardApiDelegateImpl implements CreditCardApiDelegate {
     }
 
     @Override
+    public ResponseEntity<Boolean> getCustomerCreditCardDebts(String customerId) {
+        log.info("Getting customer credit card debts: {}", customerId);
+        boolean hasDebts = creditCardService.getCustomerCreditCardDebts(customerId);
+        return ResponseEntity.ok(hasDebts);
+    }
+
+    @Override
     @CircuitBreaker(name = "createCreditCard", fallbackMethod = "createCreditCardFallback")
     public ResponseEntity<CreditCardResponseDto> createCreditCard(
             CreditCardRequestDto creditCardRequest) {

@@ -273,6 +273,30 @@ public class CreditCardInstallmentServiceImpl implements CreditCardInstallmentSe
     }
 
     /**
+     * Verifica si existen cuotas vencidas para una tarjeta de crédito.
+     *
+     * @param creditId identificador de tarjeta de crédito
+     * @param status estatus de la cuota
+     * @return resultado si la tarjeta de credito cuenta con deudas vencidas
+     */
+    @Override
+    public boolean getCustomerCreditCardDebts(String creditId, InstallmentStatusEnum status) {
+        try {
+            Long numberOverdueInstallments =
+                    cardInstallmentRepository.countByCreditCardIdAndStatus(creditId, status);
+
+            if (numberOverdueInstallments > 0) {
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("Error getting number of overdue installments : {}", e.getMessage());
+            throw new ServiceException(
+                    "Error getting number of overdue installments" + e.getMessage());
+        }
+    }
+
+    /**
      * Verifica si una cuota está vencida.
      *
      * @param creditCardInstallment Cuota a verificar

@@ -3,6 +3,7 @@ package com.bm_nttdata.credit_ms.service;
 import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
 import com.bm_nttdata.credit_ms.entity.CreditCard;
 import com.bm_nttdata.credit_ms.entity.DailyCreditBalance;
+import com.bm_nttdata.credit_ms.enums.InstallmentStatusEnum;
 import com.bm_nttdata.credit_ms.model.BalanceUpdateRequestDto;
 import com.bm_nttdata.credit_ms.model.ChargueCreditCardRequestDto;
 import com.bm_nttdata.credit_ms.model.CreditCardRequestDto;
@@ -84,4 +85,12 @@ public interface CreditCardService {
      */
     List<DailyCreditBalance> getAllCreditCardDailyBalances(
             String creditCardId, LocalDate searchMonth);
+
+    /**
+     * Verifica si existen cuotas vencidas en alguna tarjeta de crédito de un cliente.
+     *
+     * @param customerId identificador del cliente
+     * @return resultado si alguna tarjeta de credito cuenta con deudas vencidas
+     */
+    Boolean getCustomerCreditCardDebts(String customerId);
 }

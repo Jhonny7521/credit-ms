@@ -4,9 +4,11 @@ import com.bm_nttdata.credit_ms.client.CustomerClient;
 import com.bm_nttdata.credit_ms.dto.CustomerDto;
 import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
 import com.bm_nttdata.credit_ms.dto.PaymentDetailsDto;
+import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.entity.CreditCard;
 import com.bm_nttdata.credit_ms.entity.DailyCreditBalance;
 import com.bm_nttdata.credit_ms.enums.CardStatusEnum;
+import com.bm_nttdata.credit_ms.enums.InstallmentStatusEnum;
 import com.bm_nttdata.credit_ms.exception.ApiInvalidRequestException;
 import com.bm_nttdata.credit_ms.exception.BusinessRuleException;
 import com.bm_nttdata.credit_ms.exception.CreditNotFoundException;
@@ -367,6 +369,35 @@ public class CreditCardServiceImpl implements CreditCardService {
             log.error("Unexpected error while getting daily balances: {}", e.getMessage());
             throw new ServiceException(
                     "Unexpected error while getting daily balances" + e.getMessage());
+        }
+    }
+
+    /**
+     * Verifica si existen cuotas vencidas en alguna tarjeta de crédito de un cliente.
+     *
+     * @param customerId identificador del cliente
+     * @return resultado si alguna tarjeta de credito cuenta con deudas vencidas
+     */
+    @Override
+    public Boolean getCustomerCreditCardDebts(String customerId) {
+        try {
+            List<CreditCard> creditCardList =
+                    creditCardRepository.findByCustomerId(customerId);
+
+            for (CreditCard creditCard : creditCardList) {
+                boolean hasDebt =
+                        cardInstallmentService.getCustomerCreditCardDebts(
+                                creditCard.getId(), InstallmentStatusEnum.OVERDUE);
+                if (hasDebt) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("Unexpected error while getting customer credit card debts: {}",
+                    e.getMessage());
+            throw new ServiceException(
+                    "Unexpected error while getting customer credit card debts" + e.getMessage());
         }
     }
 

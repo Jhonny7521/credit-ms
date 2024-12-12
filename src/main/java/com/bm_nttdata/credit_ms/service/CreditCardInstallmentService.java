@@ -1,6 +1,7 @@
 package com.bm_nttdata.credit_ms.service;
 
 import com.bm_nttdata.credit_ms.dto.PaymentDetailsDto;
+import com.bm_nttdata.credit_ms.enums.InstallmentStatusEnum;
 import java.math.BigDecimal;
 
 /**
@@ -40,5 +41,14 @@ public interface CreditCardInstallmentService {
      */
     PaymentDetailsDto payBillMonth(
             BigDecimal installmentAmount, String creditCardId, int paymentDate);
+
+    /**
+     * Verifica si existen cuotas vencidas para una tarjeta de crédito.
+     *
+     * @param creditId identificador de tarjeta de crédito
+     * @param status estatus de la cuota
+     * @return resultado si la tarjeta de credito cuenta con deudas vencidas
+     */
+    boolean getCustomerCreditCardDebts(String creditId, InstallmentStatusEnum status);
 
 }

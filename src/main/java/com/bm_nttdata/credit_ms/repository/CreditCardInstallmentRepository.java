@@ -36,4 +36,13 @@ public interface CreditCardInstallmentRepository
      */
     List<CreditCardInstallment> findByCreditCardIdAndDueDateLessThanAndStatusNot(
             String creditCardId, LocalDate dueDate, InstallmentStatusEnum statusEnum);
+
+    /**
+     * Busca si existen pagos de tarjetas de créditos con estatus de vencidos.
+     *
+     * @param creditId identifcador de tarjeta de crédito
+     * @param status estatus de cuotas
+     * @return numero de registros que coinciden con los criterios de búsqueda
+     */
+    long countByCreditCardIdAndStatus(String creditId, InstallmentStatusEnum status);
 }

@@ -177,6 +177,27 @@ paths:
                 items:
                   $ref: '#/components/schemas/DailyBalanceDto'
 
+  /credits/customer/{customerId}/debts:
+    get:
+      tags:
+        - Credit
+      summary: Verify if a customer has outstanding debts
+      operationId: getCustomerCreditDebts
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          description: ID del cliente a verificar
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Indica si el cliente tiene deudas pendientes
+          content:
+            application/json:
+              schema:
+                type: boolean
+
   /credit-cards:
     get:
       tags:
@@ -371,6 +392,27 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DailyBalanceDto'
+
+  /credit-cards/customer/{customerId}/debts:
+    get:
+      tags:
+        - CreditCard
+      summary: Verify if a customer has outstanding debts
+      operationId: getCustomerCreditCardDebts
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          description: ID del cliente a verificar
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Indica si el cliente tiene deudas pendientes
+          content:
+            application/json:
+              schema:
+                type: boolean
 components:
   schemas:
     CreditRequestDto:

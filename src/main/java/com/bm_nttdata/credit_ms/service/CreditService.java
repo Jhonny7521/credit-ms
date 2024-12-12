@@ -73,4 +73,12 @@ public interface CreditService {
      * @return Lista de saldos diarios del crédito
      */
     List<DailyCreditBalance> getAllCreditDailyBalances(String creditId, LocalDate searchMonth);
+
+    /**
+     * Verifica si existen cuotas vencidas en algun crédito de un cliente.
+     *
+     * @param customerId identificador del cliente
+     * @return resultado si algun credito cuenta con deudas vencidas
+     */
+    boolean getCustomerCreditDebts(String customerId);
 }

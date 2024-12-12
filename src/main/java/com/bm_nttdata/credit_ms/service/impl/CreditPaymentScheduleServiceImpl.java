@@ -243,6 +243,31 @@ public class CreditPaymentScheduleServiceImpl implements CreditPaymentScheduleSe
     }
 
     /**
+     * Verifica si existen cuotas vencidas para un crédito.
+     *
+     * @param creditId identificador de crédito
+     * @param status estatus de la cuota
+     * @return resultado si el credito cuenta con deudas vencidas
+     */
+    @Override
+    public boolean getCustomerCreditDebts(String creditId, InstallmentStatusEnum status) {
+
+        try {
+            Long numberOverdueInstallments =
+                    paymentScheduleRepository.countByCreditIdAndStatus(creditId, status);
+
+            if (numberOverdueInstallments > 0) {
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("Error getting number of overdue installments : {}", e.getMessage());
+            throw new ServiceException(
+                    "Error getting number of overdue installments" + e.getMessage());
+        }
+    }
+
+    /**
      * Verifica si una cuota está vencida.
      *
      * @param creditInstallment Cuota a verificar

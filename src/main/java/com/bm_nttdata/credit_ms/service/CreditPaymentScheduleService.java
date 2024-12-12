@@ -2,6 +2,7 @@ package com.bm_nttdata.credit_ms.service;
 
 import com.bm_nttdata.credit_ms.dto.PaymentDetailsDto;
 import com.bm_nttdata.credit_ms.entity.Credit;
+import com.bm_nttdata.credit_ms.enums.InstallmentStatusEnum;
 import java.math.BigDecimal;
 
 /**
@@ -40,4 +41,13 @@ public interface CreditPaymentScheduleService {
      * @return Dto con el detalle de lo pagado
      */
     PaymentDetailsDto payMonthlyInstallment(BigDecimal paymentAmount, String id, int paymentDay);
+
+    /**
+     * Verifica si existen cuotas vencidas para un crédito.
+     *
+     * @param creditId identificador de crédito
+     * @param status estatus de la cuota
+     * @return resultado si el credito cuenta con deudas vencidas
+     */
+    boolean getCustomerCreditDebts(String creditId, InstallmentStatusEnum status);
 }

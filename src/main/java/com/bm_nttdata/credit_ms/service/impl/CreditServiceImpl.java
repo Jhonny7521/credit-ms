@@ -7,6 +7,7 @@ import com.bm_nttdata.credit_ms.dto.PaymentDetailsDto;
 import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.entity.DailyCreditBalance;
 import com.bm_nttdata.credit_ms.enums.CreditStatusEnum;
+import com.bm_nttdata.credit_ms.enums.InstallmentStatusEnum;
 import com.bm_nttdata.credit_ms.exception.ApiInvalidRequestException;
 import com.bm_nttdata.credit_ms.exception.BusinessRuleException;
 import com.bm_nttdata.credit_ms.exception.CreditNotFoundException;
@@ -285,6 +286,28 @@ public class CreditServiceImpl implements CreditService {
             log.error("Unexpected error while getting daily balances: {}", e.getMessage());
             throw new ServiceException(
                     "Unexpected error while getting daily balances" + e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean getCustomerCreditDebts(String customerId) {
+
+        try {
+            List<Credit> creditList = creditRepository.findByCustomerId(customerId);
+
+            for (Credit credit : creditList) {
+                boolean hasDebt =
+                        paymentScheduleService.getCustomerCreditDebts(
+                                credit.getId(), InstallmentStatusEnum.OVERDUE);
+                if (hasDebt) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("Unexpected error while getting customer credit debts: {}", e.getMessage());
+            throw new ServiceException(
+                    "Unexpected error while getting customer credit debts" + e.getMessage());
         }
     }
 

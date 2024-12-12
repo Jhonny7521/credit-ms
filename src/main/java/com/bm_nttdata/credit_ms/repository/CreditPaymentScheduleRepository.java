@@ -24,4 +24,13 @@ public interface CreditPaymentScheduleRepository
      */
     List<CreditPaymentSchedule> findByCreditIdAndDueDateLessThanAndStatusNot(
             String creditId, LocalDate dueDate, InstallmentStatusEnum status);
+
+    /**
+     * Busca si existen pagos de créditos con estatus de vencidos.
+     *
+     * @param creditId identifcador de crédito
+     * @param status estatus de cuotas
+     * @return numero de registros que coinciden con los criterios de búsqueda
+     */
+    Long countByCreditIdAndStatus(String creditId, InstallmentStatusEnum status);
 }
