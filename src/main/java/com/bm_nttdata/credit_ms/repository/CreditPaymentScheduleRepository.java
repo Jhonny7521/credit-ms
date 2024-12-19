@@ -2,12 +2,35 @@ package com.bm_nttdata.credit_ms.repository;
 
 import com.bm_nttdata.credit_ms.entity.CreditPaymentSchedule;
 import com.bm_nttdata.credit_ms.enums.InstallmentStatusEnum;
-import org.springframework.data.mongodb.repository.MongoRepository;
-
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface CreditPaymentScheduleRepository extends MongoRepository<CreditPaymentSchedule, String> {
+/**
+ * Repositorio para la gestión de cronogramas de pago de créditos en MongoDB.
+ * Proporciona operaciones de acceso a datos para la entidad CreditPaymentSchedule.
+ */
+public interface CreditPaymentScheduleRepository
+        extends MongoRepository<CreditPaymentSchedule, String> {
 
-    List<CreditPaymentSchedule> findByCreditCardIdAndDueDateLessThanAndStatusNot(String creditCardId, LocalDate dueDate, InstallmentStatusEnum paid);
+    /**
+     * Busca los cronogramas de pago de un crédito que tienen fecha de vencimiento anterior
+     * a la especificada y que no están en el estado enviado.
+     *
+     * @param creditId ID del crédito
+     * @param dueDate Fecha de vencimiento límite
+     * @param status Estado de pago que se excluirá de la búsqueda
+     * @return Lista de cronogramas de pago que coinciden con los criterios de búsqueda
+     */
+    List<CreditPaymentSchedule> findByCreditIdAndDueDateLessThanAndStatusNot(
+            String creditId, LocalDate dueDate, InstallmentStatusEnum status);
+
+    /**
+     * Busca si existen pagos de créditos con estatus de vencidos.
+     *
+     * @param creditId identifcador de crédito
+     * @param status estatus de cuotas
+     * @return numero de registros que coinciden con los criterios de búsqueda
+     */
+    Long countByCreditIdAndStatus(String creditId, InstallmentStatusEnum status);
 }

@@ -1,39 +1,59 @@
 package com.bm_nttdata.credit_ms.service.impl;
 
-import com.bm_nttdata.credit_ms.DTO.OperationResponseDTO;
-import com.bm_nttdata.credit_ms.DTO.CustomerDTO;
 import com.bm_nttdata.credit_ms.client.CustomerClient;
+import com.bm_nttdata.credit_ms.dto.CustomerDto;
+import com.bm_nttdata.credit_ms.dto.OperationResponseDto;
+import com.bm_nttdata.credit_ms.dto.PaymentDetailsDto;
 import com.bm_nttdata.credit_ms.entity.Credit;
 import com.bm_nttdata.credit_ms.entity.CreditCard;
+import com.bm_nttdata.credit_ms.entity.DailyCreditBalance;
 import com.bm_nttdata.credit_ms.enums.CardStatusEnum;
+import com.bm_nttdata.credit_ms.enums.InstallmentStatusEnum;
 import com.bm_nttdata.credit_ms.exception.ApiInvalidRequestException;
 import com.bm_nttdata.credit_ms.exception.BusinessRuleException;
 import com.bm_nttdata.credit_ms.exception.CreditNotFoundException;
 import com.bm_nttdata.credit_ms.exception.ServiceException;
 import com.bm_nttdata.credit_ms.mapper.CreditCardMapper;
-import com.bm_nttdata.credit_ms.model.*;
+import com.bm_nttdata.credit_ms.model.BalanceUpdateRequestDto;
+import com.bm_nttdata.credit_ms.model.ChargueCreditCardRequestDto;
+import com.bm_nttdata.credit_ms.model.CreditCardRequestDto;
+import com.bm_nttdata.credit_ms.model.PaymentCreditProductRequestDto;
 import com.bm_nttdata.credit_ms.repository.CreditCardRepository;
-import com.bm_nttdata.credit_ms.service.ICreditCardInstallmentService;
-import com.bm_nttdata.credit_ms.service.ICreditCardService;
+import com.bm_nttdata.credit_ms.repository.DailyCreditBalanceRepository;
+import com.bm_nttdata.credit_ms.service.CreditCardInstallmentService;
+import com.bm_nttdata.credit_ms.service.CreditCardService;
 import com.bm_nttdata.credit_ms.util.CardNumberGenerator;
 import com.bm_nttdata.credit_ms.util.MonthlyInstallmentCalculator;
 import feign.FeignException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Date;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-
+/**
+ * Implementación del servicio de gestión de tarjetas de crédito.
+ * Maneja la lógica de negocio para las operaciones CRUD de tarjetas de crédito,
+ * así como el procesamiento de cargos, pagos y actualizaciones de saldo.
+ */
 @Slf4j
 @Transactional
 @Service
-public class CreditCardServiceImpl implements ICreditCardService {
+public class CreditCardServiceImpl implements CreditCardService {
 
     @Autowired
     private CreditCardRepository creditCardRepository;
+
+    @Autowired
+    private DailyCreditBalanceRepository dailyCreditBalanceRepository;
 
     @Autowired
     private CreditCardMapper creditCardMapper;
@@ -48,42 +68,65 @@ public class CreditCardServiceImpl implements ICreditCardService {
     private CardNumberGenerator cardNumberGenerator;
 
     @Autowired
-    private ICreditCardInstallmentService cardInstallmentService;
+    private CreditCardInstallmentService cardInstallmentService;
 
+    /**
+     * Obtiene todas las tarjetas de crédito de un cliente.
+     *
+     * @param customerId ID del cliente
+     * @return Lista de tarjetas de crédito del cliente
+     * @throws ApiInvalidRequestException si no se envia un Id de cliente
+     */
     @Override
     public List<CreditCard> getAllCreditCards(String customerId) {
 
-        if (customerId == null){
+        if (customerId == null) {
             throw new ApiInvalidRequestException("Customer id is required");
         }
 
         return creditCardRepository.findByCustomerId(customerId);
     }
 
+    /**
+     * Obtiene una tarjeta de crédito por su ID.
+     *
+     * @param id ID de la tarjeta de crédito
+     * @return Tarjeta de crédito encontrada
+     * @throws CreditNotFoundException si no se encuentra una tarjeta de crédito con el id enviado.
+     */
     @Override
     public CreditCard getCreditCardById(String id) {
 
         log.info("Querying credit card data: {}", id);
         return creditCardRepository.findById(id)
-                .orElseThrow(() -> new CreditNotFoundException("Credit Card not found with id: " + id));
+                .orElseThrow(() ->
+                        new CreditNotFoundException("Credit Card not found with id: " + id));
     }
 
+    /**
+     * Crea una nueva tarjeta de crédito.
+     *
+     * @param creditCardRequest DTO con la información de la nueva tarjeta
+     * @return Tarjeta de crédito creada
+     * @throws ServiceException Si ocurre un error durante la creación
+     */
     @Override
-    public CreditCard createCreditCard(CreditCardRequestDTO creditCardRequestDTO) {
+    public CreditCard createCreditCard(CreditCardRequestDto creditCardRequest) {
 
-        CustomerDTO customerDTO ;
+        CustomerDto customer;
 
-        try{
-            customerDTO = customerClient.getCustomerById(creditCardRequestDTO.getCustomerId());
-        } catch (FeignException e){
+        try {
+            customer = customerClient.getCustomerById(creditCardRequest.getCustomerId());
+        } catch (FeignException e) {
             log.error("Error calling customer service: {}", e.getMessage());
             throw new ServiceException("Error retrieving customer information: " + e.getMessage());
         }
 
-        validateCreditCreation(customerDTO, creditCardRequestDTO);
-        CreditCard creditCard = initializeCreditCard(creditCardMapper.creditCardRequestDtoToCreditCardEntity(creditCardRequestDTO));
+        validateCreditCreation(customer, creditCardRequest);
+        CreditCard creditCard = initializeCreditCard(
+                creditCardMapper.creditCardRequestDtoToCreditCardEntity(creditCardRequest));
 
-        try{
+        try {
             return creditCardRepository.save(creditCard);
         } catch (Exception e) {
             log.error("Unexpected error while saving credit card: {}", e.getMessage());
@@ -91,55 +134,65 @@ public class CreditCardServiceImpl implements ICreditCardService {
         }
     }
 
+    /**
+     * Realiza un cargo a una tarjeta de crédito.
+     *
+     * @param chargueCreditCardRequest DTO con la información del cargo
+     * @return Respuesta de la operación
+     */
     @Override
-    public OperationResponseDTO chargeCreditCard(ChargueCreditCardRequestDTO chargueCreditCardRequestDTO) {
+    public OperationResponseDto chargeCreditCard(
+            ChargueCreditCardRequestDto chargueCreditCardRequest) {
 
-        log.info("Starting credit card charge process: {}", chargueCreditCardRequestDTO.getCreditCardId());
+        log.info("Starting credit card charge process: {}",
+                chargueCreditCardRequest.getCreditCardId());
 
-        try{
-            CreditCard creditCard = getCreditCardById(chargueCreditCardRequestDTO.getCreditCardId());
-            BigDecimal chargeAmount = chargueCreditCardRequestDTO.getChargeAmount();
+        try {
+            CreditCard creditCard =
+                    getCreditCardById(chargueCreditCardRequest.getCreditCardId());
+            BigDecimal chargeAmount = chargueCreditCardRequest.getChargeAmount();
 
             if (creditCard.getAvailableCredit().compareTo(chargeAmount) < 0) {
 
-                return OperationResponseDTO.builder()
+                return OperationResponseDto.builder()
                         .status("FAILED")
                         .message("Unprocessed charge")
                         .error("Insufficient available credit")
                         .build();
             }
 
-            if (chargueCreditCardRequestDTO.getTotalInstallment() > 1){
+            if (chargueCreditCardRequest.getTotalInstallment() > 1) {
                 chargeAmount = installmentCalculator.calculateMonthlyPayment(
-                        chargueCreditCardRequestDTO.getChargeAmount(),
+                        chargueCreditCardRequest.getChargeAmount(),
                         BigDecimal.valueOf(creditCard.getInterestRate()),
-                        chargueCreditCardRequestDTO.getTotalInstallment());
+                        chargueCreditCardRequest.getTotalInstallment());
             }
 
             cardInstallmentService.createCharges(
-                    chargeAmount, chargueCreditCardRequestDTO.getTotalInstallment(),
+                    chargeAmount, chargueCreditCardRequest.getTotalInstallment(),
                     creditCard.getId(), creditCard.getPaymentDate());
 
-            BalanceUpdateRequestDTO balanceUpdateRequestDTO = new BalanceUpdateRequestDTO();
-            balanceUpdateRequestDTO.setTransactionAmount(chargeAmount);
-            balanceUpdateRequestDTO.setTransactionType(BalanceUpdateRequestDTO.TransactionTypeEnum.CREDIT_CHARGE);
+            BalanceUpdateRequestDto balanceUpdateRequest = new BalanceUpdateRequestDto();
+            balanceUpdateRequest.setTransactionAmount(chargeAmount);
+            balanceUpdateRequest.setTransactionType(
+                    BalanceUpdateRequestDto.TransactionTypeEnum.CREDIT_CHARGE);
 
-            OperationResponseDTO operationResponseDTO = updateCreditCardBalance(creditCard.getId(), balanceUpdateRequestDTO);
+            OperationResponseDto operationResponse =
+                    updateCreditCardBalance(creditCard.getId(), balanceUpdateRequest);
 
-            if (!operationResponseDTO.getStatus().equals("SUCCESS")){
+            if (!operationResponse.getStatus().equals("SUCCESS")) {
 
-                return operationResponseDTO;
+                return operationResponse;
             }
 
             log.info("Credit card charge processed successfully: {}", creditCard.getId());
-            operationResponseDTO.setMessage("Charge successfully processed");
+            operationResponse.setMessage("Charge successfully processed");
 
-            return operationResponseDTO;
+            return operationResponse;
 
         } catch (Exception e) {
             log.error("Unexpected error during credit card charge process: {}", e.getMessage());
-            //throw new ServiceException("Error processing credit card charge: " + e.getMessage());
-            return OperationResponseDTO.builder()
+            return OperationResponseDto.builder()
                     .status("FAILED")
                     .message("Unprocessed charge")
                     .error("Error processing credit card charge" + e.getMessage())
@@ -147,37 +200,47 @@ public class CreditCardServiceImpl implements ICreditCardService {
         }
     }
 
+    /**
+     * Procesa un pago a una tarjeta de crédito.
+     *
+     * @param paymentCreditProductRequest DTO con la información del pago
+     * @return Respuesta de la operación
+     */
     @Override
-    public OperationResponseDTO paymentCreditCard(PaymentCreditProductRequestDTO paymentCreditProductRequestDTO) {
+    public OperationResponseDto paymentCreditCard(
+            PaymentCreditProductRequestDto paymentCreditProductRequest) {
 
-        log.info("Initiating payment processing on credit card: {}", paymentCreditProductRequestDTO.getCreditProductId());
+        log.info("Initiating payment processing on credit card: {}",
+                paymentCreditProductRequest.getCreditId());
 
         try {
-            CreditCard creditCard = getCreditCardById(paymentCreditProductRequestDTO.getCreditProductId());
-            BigDecimal amountPaid = cardInstallmentService.payBillMonth(
-                    paymentCreditProductRequestDTO.getPaymentAmount(),
+            CreditCard creditCard = getCreditCardById(paymentCreditProductRequest.getCreditId());
+            PaymentDetailsDto paymentDetails = cardInstallmentService.payBillMonth(
+                    paymentCreditProductRequest.getAmount(),
                     creditCard.getId(),
                     creditCard.getPaymentDate());
 
-            BalanceUpdateRequestDTO balanceUpdateRequestDTO = new BalanceUpdateRequestDTO();
-            balanceUpdateRequestDTO.setTransactionAmount(amountPaid);
-            balanceUpdateRequestDTO.setTransactionType(BalanceUpdateRequestDTO.TransactionTypeEnum.PAYMENT);
+            BalanceUpdateRequestDto balanceUpdateRequest = new BalanceUpdateRequestDto();
+            balanceUpdateRequest.setTransactionAmount(paymentDetails.getPaymentAmount());
+            balanceUpdateRequest.setTransactionType(
+                    BalanceUpdateRequestDto.TransactionTypeEnum.PAYMENT);
 
-            OperationResponseDTO operationResponseDTO = updateCreditCardBalance(creditCard.getId(), balanceUpdateRequestDTO);
+            OperationResponseDto operationResponse =
+                    updateCreditCardBalance(creditCard.getId(), balanceUpdateRequest);
 
-            if (!operationResponseDTO.getStatus().equals("SUCCESS")){
+            if (!operationResponse.getStatus().equals("SUCCESS")) {
 
-                return operationResponseDTO;
+                return operationResponse;
             }
 
             log.info("Payment processed successfully: {}", creditCard.getId());
-            operationResponseDTO.setMessage("Payment successfully processed");
+            operationResponse.setMessage("Payment successfully processed");
 
-            return operationResponseDTO;
+            return operationResponse;
 
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("Unexpected error paying monthly credit card bill: {}", e.getMessage());
-            return OperationResponseDTO.builder()
+            return OperationResponseDto.builder()
                     .status("FAILED")
                     .message("Unprocessed charge")
                     .error("Error when paying monthly credit card bill: " + e.getMessage())
@@ -185,35 +248,45 @@ public class CreditCardServiceImpl implements ICreditCardService {
         }
     }
 
+    /**
+     * Actualiza el saldo de una tarjeta de crédito.
+     *
+     * @param id ID de la tarjeta de crédito
+     * @param balanceUpdateRequest DTO con la información de actualización del saldo
+     * @return Respuesta de la operación
+     */
     @Override
-    public OperationResponseDTO updateCreditCardBalance(String id, BalanceUpdateRequestDTO balanceUpdateRequestDTO) {
+    public OperationResponseDto updateCreditCardBalance(
+            String id, BalanceUpdateRequestDto balanceUpdateRequest) {
 
         log.info("Initiating credit card balance update: {}", id);
 
         try {
             CreditCard creditCard = getCreditCardById(id);
-            String transactionType = balanceUpdateRequestDTO.getTransactionType().getValue();
-            BigDecimal transactionAmount = balanceUpdateRequestDTO.getTransactionAmount();
+            String transactionType = balanceUpdateRequest.getTransactionType().getValue();
+            BigDecimal transactionAmount = balanceUpdateRequest.getTransactionAmount();
 
-            switch (transactionType){
+            switch (transactionType) {
                 case "PAYMENT":
-                    creditCard.setAvailableCredit(creditCard.getAvailableCredit().add(transactionAmount));
+                    creditCard.setAvailableCredit(
+                            creditCard.getAvailableCredit().add(transactionAmount));
                     break;
 
                 case "CREDIT_CHARGE":
                     if (creditCard.getAvailableCredit().compareTo(transactionAmount) < 0) {
-                        return OperationResponseDTO.builder()
+                        return OperationResponseDto.builder()
                                 .status("FAILED")
                                 .message("Unprocessed charge")
                                 .error("Insufficient available credit")
                                 .build();
                     }
 
-                    creditCard.setAvailableCredit(creditCard.getAvailableCredit().subtract(transactionAmount));
+                    creditCard.setAvailableCredit(
+                            creditCard.getAvailableCredit().subtract(transactionAmount));
                     break;
 
                 default:
-                    return OperationResponseDTO.builder()
+                    return OperationResponseDto.builder()
                             .status("FAILED")
                             .message("Unprocessed charge")
                             .error("Incorrect transaction type")
@@ -226,14 +299,14 @@ public class CreditCardServiceImpl implements ICreditCardService {
 
             log.info(" *** Balance update successful *** ");
 
-            return OperationResponseDTO.builder()
+            return OperationResponseDto.builder()
                     .status("SUCCESS")
                     .message("Balance update successful")
                     .build();
 
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("Unexpected error while updating credit card balance: {}", e.getMessage());
-            return OperationResponseDTO.builder()
+            return OperationResponseDto.builder()
                     .status("FAILED")
                     .message("Unprocessed charge")
                     .error("Error while updating monthly credit card balance: " + e.getMessage())
@@ -241,6 +314,11 @@ public class CreditCardServiceImpl implements ICreditCardService {
         }
     }
 
+    /**
+     * Elimina una tarjeta de crédito.
+     *
+     * @param id ID de la tarjeta de crédito a eliminar
+     */
     @Override
     public void deleteCredit(String id) {
         log.info("Initiating credit deletion: {}", id);
@@ -256,26 +334,120 @@ public class CreditCardServiceImpl implements ICreditCardService {
         }
     }
 
+    /**
+     * Obtiene todos los saldos diarios de un mes en especifico.
+     *
+     * @param creditCardId ID de la tarjeta de crédito
+     * @param searchMonth mes de busqueda de datos
+     * @return Lista de saldos diarios de la tarjeta de crédito
+     */
+    @Override
+    public List<DailyCreditBalance> getAllCreditCardDailyBalances(
+            String creditCardId, LocalDate searchMonth) {
+
+        try {
+            YearMonth month = YearMonth.from(searchMonth);
+            LocalDate startDate = month.atDay(1);
+            LocalDate endDate = month.atEndOfMonth();
+
+            // Convertir LocalDate a ZonedDateTime en UTC
+            ZonedDateTime startDateTime = startDate.atStartOfDay(ZoneOffset.UTC);
+            ZonedDateTime endDateTime = endDate.atTime(LocalTime.MAX).atZone(ZoneOffset.UTC);
+
+            // Convertir a Date para la consulta
+            Date startDateMongo = Date.from(startDateTime.toInstant());
+            Date endDateMongo = Date.from(endDateTime.toInstant());
+
+            List<DailyCreditBalance> dailyBalanceList =
+                    dailyCreditBalanceRepository.findByCreditProductIdAndDateBetween(
+                            creditCardId,
+                            startDateMongo,
+                            endDateMongo);
+            log.info("Balances found: " + dailyBalanceList);
+            return dailyBalanceList;
+        } catch (Exception e) {
+            log.error("Unexpected error while getting daily balances: {}", e.getMessage());
+            throw new ServiceException(
+                    "Unexpected error while getting daily balances" + e.getMessage());
+        }
+    }
+
+    /**
+     * Verifica si existen cuotas vencidas en alguna tarjeta de crédito de un cliente.
+     *
+     * @param customerId identificador del cliente
+     * @return resultado si alguna tarjeta de credito cuenta con deudas vencidas
+     */
+    @Override
+    public Boolean getCustomerCreditCardDebts(String customerId) {
+        try {
+            List<CreditCard> creditCardList =
+                    creditCardRepository.findByCustomerId(customerId);
+
+            for (CreditCard creditCard : creditCardList) {
+                boolean hasDebt =
+                        cardInstallmentService.getCustomerCreditCardDebts(
+                                creditCard.getId(), InstallmentStatusEnum.OVERDUE);
+                if (hasDebt) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("Unexpected error while getting customer credit card debts: {}",
+                    e.getMessage());
+            throw new ServiceException(
+                    "Unexpected error while getting customer credit card debts" + e.getMessage());
+        }
+    }
+
+    /**
+     * Valida la eliminación de una tarjeta de crédito.
+     * Verifica que la tarjeta no tenga saldo pendiente.
+     *
+     * @param creditCard Tarjeta de crédito a validar
+     * @throws BusinessRuleException si la tarjeta tiene saldo pendiente
+     */
     private void validateCreditCardDeletion(CreditCard creditCard) {
-        if (creditCard.getCreditLimit().compareTo(creditCard.getAvailableCredit()) != 0){
-            throw new BusinessRuleException("A credit card with an outstanding balance can't be deleted.");
+        if (creditCard.getCreditLimit().compareTo(creditCard.getAvailableCredit()) != 0) {
+            throw new BusinessRuleException(
+                    "A credit card with an outstanding balance can't be deleted.");
         }
     }
 
-    private void validateCreditCreation(CustomerDTO customerDTO, CreditCardRequestDTO creditCardRequestDTO) {
+    /**
+     * Valida la creación de una tarjeta de crédito.
+     * Verifica que el tipo de tarjeta coincida con el tipo de cliente.
+     *
+     * @param customer Cliente que solicita la tarjeta
+     * @param creditCardRequest Solicitud de tarjeta de crédito
+     * @throws BusinessRuleException si el tipo de tarjeta no es compatible con el tipo de cliente
+     */
+    private void validateCreditCreation(
+            CustomerDto customer, CreditCardRequestDto creditCardRequest) {
 
-        if (customerDTO.getCustomerType().equals("PERSONAL")){
+        if (customer.getCustomerType().equals("PERSONAL")) {
 
-            if (creditCardRequestDTO.getCardType().getValue().equals("BUSINESS")){
-                throw new BusinessRuleException("Personal client can't apply for Business credit card");
+            if (creditCardRequest.getCardType().getValue().equals("BUSINESS")) {
+                throw new BusinessRuleException(
+                        "Personal client can't apply for Business credit card");
             }
-        }
-        else if (customerDTO.getCustomerType().equals("BUSINESS")){
-            if (creditCardRequestDTO.getCardType().getValue().equals("PERSONAL")){
-                throw new BusinessRuleException("Business client can't apply for Personal credit card");
+        } else if (customer.getCustomerType().equals("BUSINESS")) {
+            if (creditCardRequest.getCardType().getValue().equals("PERSONAL")) {
+                throw new BusinessRuleException(
+                        "Business client can't apply for Personal credit card");
             }
         }
     }
+
+    /**
+     * Inicializa una nueva tarjeta de crédito con valores predeterminados.
+     * Genera el número de tarjeta, establece el crédito disponible igual al límite,
+     * activa la tarjeta y establece las marcas de tiempo.
+     *
+     * @param creditCard Tarjeta de crédito a inicializar
+     * @return Tarjeta de crédito inicializada
+     */
     private CreditCard initializeCreditCard(CreditCard creditCard) {
 
         creditCard.setCardNumber(cardNumberGenerator.generateCardNumber());

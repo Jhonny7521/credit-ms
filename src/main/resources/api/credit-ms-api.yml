@@ -26,7 +26,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CreditResponseDTO'
+                  $ref: '#/components/schemas/CreditResponseDto'
     post:
       tags:
         - Credit
@@ -37,14 +37,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreditRequestDTO'
+              $ref: '#/components/schemas/CreditRequestDto'
       responses:
         '201':
           description: Credit created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditResponseDTO'
+                $ref: '#/components/schemas/CreditResponseDto'
 
   /credits/{id}:
     get:
@@ -64,7 +64,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditResponseDTO'
+                $ref: '#/components/schemas/CreditResponseDto'
     put:
       tags:
         - Credit
@@ -81,14 +81,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BalanceUpdateRequestDTO'
+              $ref: '#/components/schemas/BalanceUpdateRequestDto'
       responses:
         '201':
           description: Credit updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseDTO'
+                $ref: '#/components/schemas/ApiResponseDto'
 
     delete:
       tags:
@@ -109,31 +109,25 @@ paths:
         '409':
           description: Cannot delete Credit with outstanding balance
 
-  /credit/{id}/payment:
+  /credits/payment:
     post:
       tags:
         - Credit
       summary: Payment to credit
       operationId: paymentCredit
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentCreditProductRequestDTO'
+              $ref: '#/components/schemas/PaymentCreditProductRequestDto'
       responses:
         '200':
           description: Results of processing credit card payment
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseDTO'
+                $ref: '#/components/schemas/ApiResponseDto'
 
   /credits/{id}/balance:
     get:
@@ -153,7 +147,57 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditBalanceResponseDTO'
+                $ref: '#/components/schemas/CreditBalanceResponseDto'
+
+  /credits/{id}/daily-balance:
+    get:
+      tags:
+        - Credit
+      summary: Get all daily balances
+      operationId: getAllCreditDailyBalances
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: searchMonth
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of daily balances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DailyBalanceDto'
+
+  /credits/customer/{customerId}/debts:
+    get:
+      tags:
+        - Credit
+      summary: Verify if a customer has outstanding debts
+      operationId: getCustomerCreditDebts
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          description: ID del cliente a verificar
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Indica si el cliente tiene deudas pendientes
+          content:
+            application/json:
+              schema:
+                type: boolean
+
   /credit-cards:
     get:
       tags:
@@ -173,7 +217,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CreditCardResponseDTO'
+                  $ref: '#/components/schemas/CreditCardResponseDto'
     post:
       tags:
         - CreditCard
@@ -184,14 +228,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreditCardRequestDTO'
+              $ref: '#/components/schemas/CreditCardRequestDto'
       responses:
         '201':
           description: Credit card created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCardResponseDTO'
+                $ref: '#/components/schemas/CreditCardResponseDto'
   /credit-cards/{id}:
     get:
       tags:
@@ -210,7 +254,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCardResponseDTO'
+                $ref: '#/components/schemas/CreditCardResponseDto'
     put:
       tags:
         - CreditCard
@@ -227,14 +271,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BalanceUpdateRequestDTO'
+              $ref: '#/components/schemas/BalanceUpdateRequestDto'
       responses:
         '200':
           description: Credit card updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseDTO'
+                $ref: '#/components/schemas/ApiResponseDto'
 
     delete:
       tags:
@@ -255,31 +299,25 @@ paths:
         '409':
           description: Cannot delete Credit card with outstanding balance
 
-  /credit-cards/{id}/payment:
+  /credit-cards/payment:
     post:
       tags:
         - CreditCard
       summary: Payment to credit card
       operationId: paymentCreditCard
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentCreditProductRequestDTO'
+              $ref: '#/components/schemas/PaymentCreditProductRequestDto'
       responses:
         '200':
           description: Results of processing credit card payment
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseDTO'
+                $ref: '#/components/schemas/ApiResponseDto'
 
   /credit-cards/{id}/charge:
     post:
@@ -298,14 +336,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ChargueCreditCardRequestDTO'
+              $ref: '#/components/schemas/ChargueCreditCardRequestDto'
       responses:
         '200':
           description: Results of generating credit card charge
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseDTO'
+                $ref: '#/components/schemas/ApiResponseDto'
 
   /credit-cards/{id}/balance:
     get:
@@ -325,10 +363,59 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCardBalanceResponseDTO'
+                $ref: '#/components/schemas/CreditCardBalanceResponseDto'
+
+  /credit-cards/{id}/daily-balance:
+    get:
+      tags:
+        - CreditCard
+      summary: Get all daily balances
+      operationId: getAllCreditCardDailyBalances
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: searchMonth
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of daily balances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DailyBalanceDto'
+
+  /credit-cards/customer/{customerId}/debts:
+    get:
+      tags:
+        - CreditCard
+      summary: Verify if a customer has outstanding debts
+      operationId: getCustomerCreditCardDebts
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          description: ID del cliente a verificar
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Indica si el cliente tiene deudas pendientes
+          content:
+            application/json:
+              schema:
+                type: boolean
 components:
   schemas:
-    CreditRequestDTO:
+    CreditRequestDto:
       type: object
       required:
         - customerId
@@ -353,7 +440,7 @@ components:
         interestRate:
           type: number
           description: Taza de interez anual
-    CreditResponseDTO:
+    CreditResponseDto:
       type: object
       properties:
         id:
@@ -393,7 +480,7 @@ components:
           type: string
           format: date-time
           description: Fecha de actualización del credito
-    CreditCardRequestDTO:
+    CreditCardRequestDto:
       type: object
       required:
         - customerId
@@ -420,7 +507,7 @@ components:
         interestRate:
           type: number
           description: Taza de interez anual
-    CreditCardResponseDTO:
+    CreditCardResponseDto:
       type: object
       properties:
         id:
@@ -459,7 +546,7 @@ components:
           type: string
           format: date-time
           description: Fecha de actualización de la cuanta bancaria
-    CreditBalanceResponseDTO:
+    CreditBalanceResponseDto:
       type: object
       properties:
         creditId:
@@ -481,7 +568,7 @@ components:
         daysOverdue:
           type: integer
           description: Dias de retrazo
-    CreditCardBalanceResponseDTO:
+    CreditCardBalanceResponseDto:
       type: object
       properties:
         creditCardId:
@@ -496,7 +583,7 @@ components:
         paymentDay:
           type: integer
           description: Dia de pago
-    BalanceUpdateRequestDTO:
+    BalanceUpdateRequestDto:
       type: object
       properties:
         transactionType:
@@ -506,7 +593,7 @@ components:
         transactionAmount:
           type: number
           description: Monto de transaccion
-    ChargueCreditCardRequestDTO:
+    ChargueCreditCardRequestDto:
       type: object
       required:
         - creditCardId
@@ -522,19 +609,28 @@ components:
         chargeAmount:
           type: number
           description: Monto de cargo
-    PaymentCreditProductRequestDTO:
+    PaymentCreditProductRequestDto:
       type: object
       required:
         - creditCardId
         - paymentAmount
       properties:
-        creditProductId:
+        sourceAccountId:
           type: string
-          description: Identificador de producto de credito
-        paymentAmount:
+          description: Identificador de cuenta origen
+        creditId:
+          type: string
+          description: Identificador de producto de credito (Credito o Tarjeta de Credito)
+        amount:
           type: number
           description: Monto de pago
-    ApiResponseDTO:
+        feeAmount:
+          type: number
+          description: Monto de comision
+        description:
+          type: string
+          description: Descripcion de pago
+    ApiResponseDto:
       type: object
       properties:
         status:
@@ -543,3 +639,20 @@ components:
           type: string
         error:
           type: string
+
+    DailyBalanceDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identificador de saldo diario
+        creditProductId:
+          type: string
+          description: Identificador de producto de crédito
+        balanceDate:
+          type: string
+          format: date
+          description: fecha de balance
+        balanceAmount:
+          type: number
+          description: Monto de saldo
